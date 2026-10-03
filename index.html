@@ -80,7 +80,7 @@
   header .row { gap: 8px; }
 
   /* ---------- 위젯 격자 ---------- */
-  /* 스케치 배치: 질문|타이머 / 활동|점수판 / 작은 위젯 줄 + 명언 */
+  /* 스케치 배치: 질문|타이머 / 활동|점수판 / 아이콘 줄 */
   main {
     height: calc(100% - 64px);
     padding: 0 var(--gap) var(--gap);
@@ -289,7 +289,7 @@
   }
   #sReset.confirm { background: var(--red); color: #fff; border-color: transparent; }
 
-  /* ---------- 활동 / 질문 / 명언 ---------- */
+  /* ---------- 활동 / 질문 ---------- */
   #activity { --accent: var(--orange); }
   #question { --accent: var(--sky); }
   .text {
@@ -483,7 +483,6 @@
   .act-item.now .act-text { color: var(--chalk); }
   .act-all-done { font-size: .7em; color: var(--mint); font-weight: 900; text-align: center; }
 
-  /* ---------- 명언 한 줄 ---------- */
 
   /* ---------- 깔끔하게: 색 한 가지로 통일 ---------- */
   body.theme-clean { --one: #8fd6c4; --one-soft: rgba(143, 214, 196, .14); background: var(--board); }
@@ -592,7 +591,7 @@
     </div>
   </section>
 
-  <!-- 아래 줄: 작은 위젯 + 명언 -->
+  <!-- 아래 줄: 부수기능 아이콘 -->
   <div class="bottom">
     <section class="card tile" id="bell" style="view-transition-name: bell">
       <button class="mini" data-bell="1" aria-label="집중벨 울리기"><span class="mini-ico">🔔</span><span class="mini-txt">집중벨</span></button>
