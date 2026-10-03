@@ -1,0 +1,721 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>만능 칠판 위젯</title>
+<style>
+  :root {
+    --board: #1d3b30;
+    --board-2: #234638;
+    --card: #2a5141;
+    --card-edge: rgba(255, 255, 255, .10);
+    --chalk: #f4f1e8;
+    --chalk-dim: #c9d3cb;
+    --yellow: #ffd54a;
+    --orange: #ff9e57;
+    --pink: #ff8fb1;
+    --sky: #7cc8ff;
+    --mint: #6fe3b5;
+    --violet: #b9a2ff;
+    --red: #ff6b6b;
+    --radius: 22px;
+    --gap: 14px;
+    --font: "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: radial-gradient(ellipse at 30% 20%, var(--board-2), var(--board) 70%);
+    color: var(--chalk);
+    font-family: var(--font);
+    overflow: hidden;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* ---------- 상단 바 ---------- */
+  header {
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+  }
+  header h1 { margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -.5px; }
+  header h1 span { color: var(--yellow); }
+  .hint { color: var(--chalk-dim); font-size: 14px; }
+  header button { font-size: 15px; padding: .35em 1em; }
+
+  /* ---------- 위젯 격자 ---------- */
+  main {
+    height: calc(100% - 56px - 64px);
+    padding: 0 var(--gap);
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    gap: var(--gap);
+  }
+  .card {
+    --accent: var(--yellow);
+    position: relative;
+    background: var(--card);
+    border: 1px solid var(--card-edge);
+    border-top: 6px solid var(--accent);
+    border-radius: var(--radius);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, .25);
+    padding: 3.5cqmin 4cqmin;
+    container-type: size;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+    cursor: zoom-in;
+    overflow: hidden;
+  }
+  .card > .label {
+    margin: 0;
+    font-size: clamp(15px, 7cqmin, 64px);
+    font-weight: 800;
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    gap: .4em;
+    flex: none;
+  }
+  .card > .body {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3cqmin;
+    text-align: center;
+  }
+  .card.expanded {
+    position: fixed;
+    inset: 14px 14px 78px 14px;
+    z-index: 50;
+    cursor: zoom-out;
+    box-shadow: 0 20px 80px rgba(0, 0, 0, .6);
+  }
+  body.has-expanded main .card:not(.expanded) { visibility: hidden; }
+
+  /* ---------- 공통 버튼 ---------- */
+  .row { display: flex; gap: 1.6cqmin; flex-wrap: wrap; justify-content: center; align-items: center; }
+  button, .chip {
+    font-family: inherit;
+    font-size: clamp(14px, 4.6cqmin, 40px);
+    font-weight: 700;
+    color: var(--chalk);
+    background: rgba(255, 255, 255, .10);
+    border: 1px solid rgba(255, 255, 255, .18);
+    border-radius: 999px;
+    padding: .35em .9em;
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+  button:hover { background: rgba(255, 255, 255, .18); }
+  button:active { transform: scale(.96); }
+  button.primary { background: var(--accent); color: #1d2b25; border-color: transparent; }
+  button.on { background: var(--accent); color: #1d2b25; }
+  button:disabled { opacity: .4; cursor: default; }
+  .small { font-size: clamp(12px, 3.6cqmin, 30px); }
+  .muted { color: var(--chalk-dim); }
+
+  /* ---------- 집중벨 ---------- */
+  #bell { --accent: var(--yellow); }
+  .bell-btn {
+    font-size: 30cqmin;
+    line-height: 1;
+    background: none;
+    border: none;
+    padding: 0;
+  }
+  .bell-btn:hover { background: none; }
+  .ring .bell-btn { animation: ring .9s ease-in-out 2; }
+  @keyframes ring {
+    0%, 100% { transform: rotate(0); }
+    15% { transform: rotate(18deg); } 30% { transform: rotate(-16deg); }
+    45% { transform: rotate(12deg); } 60% { transform: rotate(-8deg); } 75% { transform: rotate(4deg); }
+  }
+  .bell-msg { font-size: 10cqmin; font-weight: 900; color: var(--yellow); min-height: 1.2em; }
+
+  /* ---------- 타이머 ---------- */
+  #timer { --accent: var(--orange); }
+  .t-display {
+    font-size: 26cqmin;
+    font-weight: 900;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+    letter-spacing: -.02em;
+  }
+  .t-display.warn { color: var(--red); }
+  .t-bar { width: 80%; height: 2.4cqmin; min-height: 6px; background: rgba(255, 255, 255, .12); border-radius: 99px; overflow: hidden; }
+  .t-bar > div { height: 100%; width: 100%; background: var(--accent); transition: width .25s linear; }
+  .done { animation: flash .5s ease-in-out 6; }
+  @keyframes flash { 50% { background: #7a2f2f; } }
+
+  /* ---------- 번호 / 모둠 뽑기 ---------- */
+  #number { --accent: var(--sky); }
+  #group { --accent: var(--pink); }
+  .pick {
+    font-size: 30cqmin;
+    font-weight: 900;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+  .pick.rolling { opacity: .55; }
+  .pick.landed { animation: pop .35s ease-out; }
+  @keyframes pop { 0% { transform: scale(.6); } 70% { transform: scale(1.12); } 100% { transform: scale(1); } }
+  .pick small { font-size: .38em; margin-left: .05em; }
+  .stepper { display: flex; align-items: center; gap: 1.2cqmin; font-size: clamp(13px, 4.2cqmin, 36px); }
+  .stepper button { padding: .1em .6em; }
+  .stepper b { min-width: 2.2em; display: inline-block; }
+  .history { display: flex; flex-wrap: wrap; gap: .8cqmin; justify-content: center; max-width: 95%; max-height: 18cqh; overflow: auto; }
+  .history span {
+    font-size: clamp(11px, 3.4cqmin, 28px);
+    padding: .1em .5em;
+    border-radius: 99px;
+    background: rgba(255, 255, 255, .12);
+  }
+
+  /* ---------- 날짜 / 시간 ---------- */
+  #date { --accent: var(--mint); }
+  #time { --accent: var(--violet); }
+  .big-date { font-size: 20cqmin; font-weight: 900; line-height: 1; }
+  .big-day { font-size: 11cqmin; font-weight: 800; color: var(--mint); }
+  .sub { font-size: 6cqmin; color: var(--chalk-dim); }
+  .big-time { font-size: 24cqmin; font-weight: 900; line-height: 1; font-variant-numeric: tabular-nums; }
+  .big-time .sec { font-size: .45em; color: var(--chalk-dim); }
+  .ampm { font-size: 8cqmin; font-weight: 800; color: var(--violet); }
+
+  /* ---------- 활동 / 질문 / 명언 ---------- */
+  #activity { --accent: var(--orange); }
+  #question { --accent: var(--sky); }
+  #quote { --accent: var(--yellow); }
+  .text {
+    font-size: 9cqmin;
+    font-weight: 800;
+    line-height: 1.35;
+    white-space: pre-wrap;
+    word-break: keep-all;
+    overflow-wrap: anywhere;
+    max-width: 100%;
+    max-height: 100%;
+    overflow: auto;
+    outline: none;
+    border-radius: 12px;
+    padding: .2em .4em;
+  }
+  .text[contenteditable="true"] {
+    background: rgba(0, 0, 0, .25);
+    box-shadow: inset 0 0 0 2px var(--accent);
+    cursor: text;
+    user-select: text;
+  }
+  .quote-text { font-size: 7.5cqmin; }
+  .quote-by { font-size: 5cqmin; color: var(--chalk-dim); font-weight: 700; }
+  .corner { position: absolute; top: 3cqmin; right: 3cqmin; display: flex; gap: 1cqmin; }
+  .corner button { font-size: clamp(12px, 3.6cqmin, 28px); padding: .25em .7em; }
+
+  /* ---------- 오른쪽 아래 현재 시간 ---------- */
+  footer {
+    position: fixed;
+    right: 18px;
+    bottom: 12px;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 20px;
+    border-radius: 999px;
+    background: rgba(0, 0, 0, .45);
+    border: 1px solid rgba(255, 255, 255, .15);
+    font-size: 26px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    backdrop-filter: blur(6px);
+  }
+  footer .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--mint); animation: blink 1s steps(2) infinite; }
+  @keyframes blink { 50% { opacity: .2; } }
+
+  /* 확대/축소 부드러운 전환 (지원 브라우저만) */
+  ::view-transition-group(*) { animation-duration: .28s; }
+
+  /* 작은 화면에서는 세로로 쌓기 */
+  @media (max-width: 760px) {
+    body { overflow: auto; }
+    header .hint { display: none; }
+    main { height: auto; grid-template-columns: 1fr; grid-template-rows: none; padding-bottom: 80px; }
+    .card { height: 46vh; }
+    footer { font-size: 20px; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>🧑‍🏫 만능 <span>칠판</span></h1>
+  <div class="row">
+    <span class="hint">위젯을 누르면 크게, 다시 누르면 원래대로</span>
+    <button id="fsBtn" class="small" title="브라우저 전체화면">⛶ 전체화면</button>
+  </div>
+</header>
+
+<main>
+  <!-- 1. 집중벨 -->
+  <section class="card" id="bell" style="view-transition-name: bell">
+    <h2 class="label">🔔 집중벨</h2>
+    <div class="body">
+      <button class="bell-btn" data-bell="1" aria-label="집중벨 울리기">🔔</button>
+      <div class="bell-msg" id="bellMsg"></div>
+      <div class="row">
+        <button data-bell="1">한 번</button>
+        <button data-bell="3">세 번</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. 타이머 -->
+  <section class="card" id="timer" style="view-transition-name: timer">
+    <h2 class="label">⏱️ 타이머</h2>
+    <div class="body">
+      <div class="t-display" id="tDisplay">03:00</div>
+      <div class="t-bar"><div id="tBar"></div></div>
+      <div class="row" id="tPresets">
+        <button data-min="1">1분</button>
+        <button data-min="2">2분</button>
+        <button data-min="3" class="on">3분</button>
+        <button data-min="5">5분</button>
+        <button data-min="10">10분</button>
+      </div>
+      <div class="row">
+        <button data-adj="-60">−1분</button>
+        <button data-adj="-10">−10초</button>
+        <button data-adj="10">+10초</button>
+        <button data-adj="60">+1분</button>
+      </div>
+      <div class="row">
+        <button class="primary" id="tStart">▶ 시작</button>
+        <button id="tReset">↺ 다시</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. 랜덤 번호뽑기 -->
+  <section class="card" id="number" style="view-transition-name: number">
+    <h2 class="label">🎲 번호 뽑기</h2>
+    <div class="body">
+      <div class="pick" id="nPick">?</div>
+      <div class="row">
+        <div class="stepper">1 ~
+          <button data-n="-1">−</button><b id="nMax">30</b><button data-n="1">+</button>번
+        </div>
+      </div>
+      <div class="row">
+        <button class="primary" id="nGo">뽑기!</button>
+        <button id="nDup" class="on" title="한 번 나온 번호는 다시 나오지 않아요">중복 없이</button>
+        <button id="nReset">초기화</button>
+      </div>
+      <div class="history" id="nHist"></div>
+    </div>
+  </section>
+
+  <!-- 4. 날짜 -->
+  <section class="card" id="date" style="view-transition-name: date">
+    <h2 class="label">📅 날짜</h2>
+    <div class="body">
+      <div class="sub" id="dYear"></div>
+      <div class="big-date" id="dDate"></div>
+      <div class="big-day" id="dDay"></div>
+    </div>
+  </section>
+
+  <!-- 5. 시간 -->
+  <section class="card" id="time" style="view-transition-name: time">
+    <h2 class="label">🕘 시간</h2>
+    <div class="body">
+      <div class="ampm" id="tAmpm"></div>
+      <div class="big-time" id="tNow"></div>
+    </div>
+  </section>
+
+  <!-- 6. 랜덤 모둠뽑기 -->
+  <section class="card" id="group" style="view-transition-name: group">
+    <h2 class="label">👥 모둠 뽑기</h2>
+    <div class="body">
+      <div class="pick" id="gPick">?</div>
+      <div class="row">
+        <div class="stepper">
+          <button data-g="-1">−</button><b id="gMax">6</b><button data-g="1">+</button>모둠
+        </div>
+      </div>
+      <div class="row">
+        <button class="primary" id="gGo">뽑기!</button>
+        <button id="gDup" class="on" title="한 번 나온 모둠은 다시 나오지 않아요">중복 없이</button>
+        <button id="gReset">초기화</button>
+      </div>
+      <div class="history" id="gHist"></div>
+    </div>
+  </section>
+
+  <!-- 7. 오늘의 활동 -->
+  <section class="card" id="activity" style="view-transition-name: activity">
+    <h2 class="label">📝 오늘의 활동</h2>
+    <div class="corner"><button class="edit-btn" data-target="actText">✏️ 편집</button></div>
+    <div class="body">
+      <div class="text" id="actText" data-key="activity"></div>
+    </div>
+  </section>
+
+  <!-- 8. 오늘의 질문 -->
+  <section class="card" id="question" style="view-transition-name: question">
+    <h2 class="label">❓ 오늘의 질문</h2>
+    <div class="corner">
+      <button id="qNext">🎲 다른 질문</button>
+      <button class="edit-btn" data-target="qText">✏️ 편집</button>
+    </div>
+    <div class="body">
+      <div class="text" id="qText" data-key="question"></div>
+    </div>
+  </section>
+
+  <!-- 9. 오늘의 명언 -->
+  <section class="card" id="quote" style="view-transition-name: quote">
+    <h2 class="label">💬 오늘의 명언</h2>
+    <div class="corner"><button id="quNext">🎲 다른 명언</button></div>
+    <div class="body">
+      <div class="text quote-text" id="quText"></div>
+      <div class="quote-by" id="quBy"></div>
+    </div>
+  </section>
+</main>
+
+<!-- 오른쪽 아래 현재 시간 -->
+<footer><span class="dot"></span><span id="footClock"></span></footer>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const store = {
+    get(k, d) { try { const v = localStorage.getItem('ibw:' + k); return v === null ? d : v; } catch { return d; } },
+    set(k, v) { try { localStorage.setItem('ibw:' + k, v); } catch {} },
+  };
+  const rand = (n) => Math.floor(Math.random() * n);
+
+  /* ================= 위젯 확대 / 축소 ================= */
+  const INTERACTIVE = 'button, input, select, textarea, a, [contenteditable="true"], .history';
+  function toggleCard(card) {
+    const apply = () => {
+      const opening = !card.classList.contains('expanded');
+      document.querySelectorAll('.card.expanded').forEach((c) => c.classList.remove('expanded'));
+      if (opening) card.classList.add('expanded');
+      document.body.classList.toggle('has-expanded', opening);
+    };
+    if (document.startViewTransition) document.startViewTransition(apply); else apply();
+  }
+  document.querySelectorAll('.card').forEach((card) => {
+    card.addEventListener('click', (e) => {
+      if (e.target.closest(INTERACTIVE)) return; // 버튼·편집칸 클릭은 확대/축소하지 않음
+      toggleCard(card);
+    });
+  });
+  document.addEventListener('keydown', (e) => {
+    const open = document.querySelector('.card.expanded');
+    if (e.key === 'Escape' && open && !document.activeElement.isContentEditable) toggleCard(open);
+  });
+
+  $('fsBtn').addEventListener('click', () => {
+    if (document.fullscreenElement) document.exitFullscreen();
+    else document.documentElement.requestFullscreen?.().catch(() => {});
+  });
+
+  /* ================= 소리 (종소리 합성) ================= */
+  let ac;
+  function strike(t, vol = .6) {
+    const master = ac.createGain();
+    master.gain.value = vol;
+    master.connect(ac.destination);
+    [[880, 1], [1318.5, .45], [1760, .4], [2637, .2], [3520, .1]].forEach(([f, a]) => {
+      const o = ac.createOscillator();
+      const g = ac.createGain();
+      o.type = 'sine';
+      o.frequency.value = f;
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(a, t + 0.008);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 2.4);
+      o.connect(g).connect(master);
+      o.start(t);
+      o.stop(t + 2.5);
+    });
+  }
+  function ringBell(times = 1) {
+    try {
+      ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+      if (ac.state === 'suspended') ac.resume();
+      for (let i = 0; i < times; i++) strike(ac.currentTime + 0.05 + i * 0.75);
+    } catch {}
+  }
+
+  /* ================= 1. 집중벨 ================= */
+  const bellCard = $('bell');
+  const bellMsgs = ['👀 집중!', '🤫 쉿! 선생님을 봐요', '✋ 하던 것 멈추기', '👂 귀를 쫑긋!'];
+  let bellTimer;
+  bellCard.querySelectorAll('[data-bell]').forEach((b) => b.addEventListener('click', () => {
+    const times = +b.dataset.bell;
+    ringBell(times);
+    bellCard.classList.remove('ring');
+    void bellCard.offsetWidth;
+    bellCard.classList.add('ring');
+    $('bellMsg').textContent = bellMsgs[rand(bellMsgs.length)];
+    clearTimeout(bellTimer);
+    bellTimer = setTimeout(() => { bellCard.classList.remove('ring'); $('bellMsg').textContent = ''; }, 2500 + times * 700);
+  }));
+
+  /* ================= 2. 타이머 ================= */
+  const timerCard = $('timer');
+  let total = 180, remain = 180, running = false, endAt = 0, tickId = null;
+  const fmt = (s) => {
+    s = Math.max(0, Math.ceil(s));
+    const m = Math.floor(s / 60), ss = s % 60;
+    return String(m).padStart(2, '0') + ':' + String(ss).padStart(2, '0');
+  };
+  function drawTimer() {
+    const d = $('tDisplay');
+    d.textContent = remain <= 0 && total > 0 && !running && timerCard.classList.contains('done') ? '끝!' : fmt(remain);
+    d.classList.toggle('warn', running && remain <= 10);
+    $('tBar').style.width = (total ? Math.max(0, remain / total) * 100 : 0) + '%';
+    $('tStart').textContent = running ? '⏸ 멈춤' : '▶ 시작';
+  }
+  function setTimer(sec) {
+    stopTimer();
+    timerCard.classList.remove('done');
+    total = remain = Math.max(0, Math.min(sec, 99 * 60 + 59));
+    drawTimer();
+  }
+  function stopTimer() { running = false; clearInterval(tickId); tickId = null; }
+  function tick() {
+    remain = (endAt - Date.now()) / 1000;
+    if (remain <= 0) {
+      remain = 0;
+      stopTimer();
+      timerCard.classList.add('done');
+      ringBell(3);
+    }
+    drawTimer();
+  }
+  $('tPresets').querySelectorAll('[data-min]').forEach((b) => b.addEventListener('click', () => {
+    $('tPresets').querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b));
+    setTimer(+b.dataset.min * 60);
+  }));
+  timerCard.querySelectorAll('[data-adj]').forEach((b) => b.addEventListener('click', () => {
+    const adj = +b.dataset.adj;
+    $('tPresets').querySelectorAll('button').forEach((x) => x.classList.remove('on'));
+    if (running) {
+      endAt = Math.max(Date.now(), endAt + adj * 1000);
+      total = Math.max(total + adj, 1);
+      tick();
+    } else {
+      setTimer(Math.ceil(remain) + adj);
+    }
+  }));
+  $('tStart').addEventListener('click', () => {
+    if (running) { stopTimer(); remain = Math.ceil(remain); drawTimer(); return; }
+    if (remain <= 0) { remain = total; timerCard.classList.remove('done'); }
+    if (remain <= 0) return;
+    // 소리 재생 권한을 미리 얻어 두기 (브라우저 자동재생 정책)
+    try { ac = ac || new (window.AudioContext || window.webkitAudioContext)(); ac.resume(); } catch {}
+    running = true;
+    endAt = Date.now() + remain * 1000;
+    tickId = setInterval(tick, 200);
+    drawTimer();
+  });
+  $('tReset').addEventListener('click', () => setTimer(total));
+  drawTimer();
+
+  /* ================= 3·6. 번호 / 모둠 뽑기 ================= */
+  function makeDraw({ pickEl, maxEl, histEl, goBtn, dupBtn, resetBtn, stepSel, min, max, initial, key, label }) {
+    let n = Math.min(max, Math.max(min, +store.get(key, initial) || initial));
+    let noDup = true;
+    let drawn = [];
+    let rolling = false;
+    const render = (v) => { pickEl.innerHTML = v === null ? '?' : v + (label ? `<small>${label}</small>` : ''); };
+    const renderHist = () => {
+      histEl.innerHTML = drawn.map((v) => `<span>${v}${label}</span>`).join('');
+      goBtn.disabled = noDup && drawn.length >= n;
+      if (goBtn.disabled) goBtn.textContent = '모두 뽑음';
+      else goBtn.textContent = '뽑기!';
+    };
+    const setN = (v) => {
+      n = Math.min(max, Math.max(min, v));
+      maxEl.textContent = n;
+      store.set(key, n);
+      drawn = drawn.filter((x) => x <= n);
+      renderHist();
+    };
+    document.querySelectorAll(stepSel).forEach((b) => b.addEventListener('click', () => setN(n + +b.dataset[b.dataset.n !== undefined ? 'n' : 'g'])));
+    dupBtn.addEventListener('click', () => { noDup = !noDup; dupBtn.classList.toggle('on', noDup); renderHist(); });
+    resetBtn.addEventListener('click', () => { drawn = []; render(null); renderHist(); });
+    goBtn.addEventListener('click', () => {
+      if (rolling) return;
+      const pool = [];
+      for (let i = 1; i <= n; i++) if (!noDup || !drawn.includes(i)) pool.push(i);
+      if (!pool.length) return;
+      const result = pool[rand(pool.length)];
+      rolling = true;
+      pickEl.classList.remove('landed');
+      pickEl.classList.add('rolling');
+      const start = Date.now();
+      const spin = () => {
+        const t = Date.now() - start;
+        if (t < 1200) {
+          render(pool.length > 1 ? pool[rand(pool.length)] : result);
+          setTimeout(spin, 40 + t / 12);
+        } else {
+          render(result);
+          pickEl.classList.remove('rolling');
+          void pickEl.offsetWidth;
+          pickEl.classList.add('landed');
+          drawn.push(result);
+          renderHist();
+          rolling = false;
+        }
+      };
+      spin();
+    });
+    setN(n);
+  }
+  makeDraw({
+    pickEl: $('nPick'), maxEl: $('nMax'), histEl: $('nHist'), goBtn: $('nGo'), dupBtn: $('nDup'), resetBtn: $('nReset'),
+    stepSel: '#number [data-n]', min: 1, max: 30, initial: 30, key: 'numMax', label: '',
+  });
+  makeDraw({
+    pickEl: $('gPick'), maxEl: $('gMax'), histEl: $('gHist'), goBtn: $('gGo'), dupBtn: $('gDup'), resetBtn: $('gReset'),
+    stepSel: '#group [data-g]', min: 2, max: 8, initial: 6, key: 'groupMax', label: '모둠',
+  });
+
+  /* ================= 4·5. 날짜 / 시간 / 오른쪽 아래 시계 ================= */
+  const DAYS = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'];
+  const pad = (v) => String(v).padStart(2, '0');
+  let lastDay = '';
+  function clock() {
+    const d = new Date();
+    const h = d.getHours();
+    const h12 = h % 12 || 12;
+    const ampm = h < 12 ? '오전' : '오후';
+    $('tAmpm').textContent = ampm;
+    $('tNow').innerHTML = `${h12}:${pad(d.getMinutes())}<span class="sec">:${pad(d.getSeconds())}</span>`;
+    $('footClock').textContent = `${ampm} ${h12}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+    const dayKey = d.toDateString();
+    if (dayKey !== lastDay) {
+      lastDay = dayKey;
+      $('dYear').textContent = `${d.getFullYear()}년`;
+      $('dDate').textContent = `${d.getMonth() + 1}월 ${d.getDate()}일`;
+      $('dDay').textContent = DAYS[d.getDay()];
+      showDailyQuote(d);
+    }
+  }
+
+  /* ================= 7·8. 오늘의 활동 / 질문 (편집 가능) ================= */
+  const QUESTIONS = [
+    '요즘 나를 가장 웃게 만드는 것은 무엇인가요?',
+    '내가 초능력을 하나 가질 수 있다면 무엇을 고를까요?',
+    '친구에게 고맙다고 말하고 싶은 일이 있나요?',
+    '10년 뒤의 나에게 한마디 한다면?',
+    '오늘 꼭 해내고 싶은 한 가지는?',
+    '내가 가장 좋아하는 계절과 그 이유는?',
+    '최근에 새로 배운 것이 있다면?',
+    '하루 동안 선생님이 된다면 무엇을 하고 싶나요?',
+    '나를 한 단어로 표현한다면?',
+    '무인도에 세 가지만 가져갈 수 있다면?',
+    '우리 반의 자랑거리는 무엇일까요?',
+    '실수했을 때 나는 어떻게 마음을 다잡나요?',
+    '세상에 없는 새로운 과목을 만든다면?',
+    '내가 좋아하는 장소는 어디이고, 왜 좋아하나요?',
+    '오늘 누군가를 도울 수 있는 방법은?',
+  ];
+  const DEFAULT_ACTIVITY = '1. 인사 나누기\n2. 오늘의 학습 목표 확인\n3. 모둠 활동\n4. 발표 및 정리';
+
+  const actEl = $('actText');
+  const qEl = $('qText');
+  actEl.textContent = store.get('activity', DEFAULT_ACTIVITY);
+  qEl.textContent = store.get('question', QUESTIONS[new Date().getDate() % QUESTIONS.length]);
+
+  document.querySelectorAll('.edit-btn').forEach((btn) => {
+    const el = $(btn.dataset.target);
+    const finish = () => {
+      el.contentEditable = 'false';
+      btn.textContent = '✏️ 편집';
+      store.set(el.dataset.key, el.innerText.trim());
+    };
+    btn.addEventListener('click', () => {
+      if (el.isContentEditable) { finish(); return; }
+      el.contentEditable = 'true';
+      btn.textContent = '✅ 완료';
+      el.focus();
+      const sel = getSelection();
+      sel.selectAllChildren(el);
+      sel.collapseToEnd();
+    });
+    el.addEventListener('blur', () => setTimeout(() => { if (el.isContentEditable && document.activeElement !== el) finish(); }, 150));
+    el.addEventListener('keydown', (e) => { if (e.key === 'Escape') el.blur(); });
+  });
+  let qIdx = rand(QUESTIONS.length);
+  $('qNext').addEventListener('click', () => {
+    qIdx = (qIdx + 1 + rand(QUESTIONS.length - 1)) % QUESTIONS.length;
+    qEl.textContent = QUESTIONS[qIdx];
+    store.set('question', qEl.textContent);
+  });
+
+  /* ================= 9. 오늘의 명언 ================= */
+  const QUOTES = [
+    ['천 리 길도 한 걸음부터.', '속담'],
+    ['배우고 때때로 익히면 또한 기쁘지 아니한가.', '공자'],
+    ['실패는 성공의 어머니이다.', '토머스 에디슨'],
+    ['오늘 걷지 않으면 내일은 뛰어야 한다.', '속담'],
+    ['할 수 있다고 믿는 사람은 결국 해낸다.', '샤를 드골'],
+    ['작은 기회로부터 종종 위대한 업적이 시작된다.', '데모스테네스'],
+    ['나는 천천히 가는 사람이지만, 절대 뒤로 가지는 않는다.', '에이브러햄 링컨'],
+    ['상상력은 지식보다 중요하다.', '알베르트 아인슈타인'],
+    ['행복은 습관이다. 그것을 몸에 지니라.', '허버드'],
+    ['친절한 말은 짧고 말하기 쉽지만, 그 울림은 끝이 없다.', '마더 테레사'],
+    ['꿈을 꿀 수 있다면, 그 꿈을 이룰 수도 있다.', '월트 디즈니'],
+    ['가장 큰 영광은 한 번도 실패하지 않는 것이 아니라, 넘어질 때마다 일어서는 데 있다.', '공자'],
+    ['읽는 것은 쉽고, 생각하는 것은 어렵고, 행동하는 것은 더 어렵다.', '괴테'],
+    ['남을 행복하게 하는 것이 나를 행복하게 하는 길이다.', '플라톤'],
+    ['시작이 반이다.', '아리스토텔레스'],
+    ['노력은 배신하지 않는다.', '격언'],
+    ['오늘의 나는 어제의 나보다 조금 더 나아지면 된다.', '격언'],
+    ['질문하는 사람은 잠시 바보가 되지만, 질문하지 않는 사람은 영원히 바보로 남는다.', '중국 속담'],
+    ['혼자 가면 빨리 가고, 함께 가면 멀리 간다.', '아프리카 속담'],
+    ['웃음은 두 사람 사이의 가장 가까운 거리이다.', '빅터 보르게'],
+    ['배움에는 끝이 없다.', '격언'],
+    ['낙숫물이 댓돌을 뚫는다.', '속담'],
+    ['위대한 일은 작은 일들이 모여 이루어진다.', '빈센트 반 고흐'],
+    ['자신을 믿어라. 당신은 생각보다 더 많은 것을 알고 있다.', '벤저민 스포크'],
+    ['아는 것을 안다고 하고, 모르는 것을 모른다고 하는 것이 참으로 아는 것이다.', '공자'],
+    ['내일은 내일의 태양이 뜬다.', '마거릿 미첼'],
+    ['고운 말은 고운 마음에서 나온다.', '격언'],
+    ['비가 온 뒤에 땅이 굳어진다.', '속담'],
+    ['재능은 노력하는 사람을 이길 수 없다.', '격언'],
+    ['교육은 세상을 바꿀 수 있는 가장 강력한 무기이다.', '넬슨 만델라'],
+  ];
+  let quIdx = 0;
+  function showQuote(i) {
+    quIdx = (i + QUOTES.length) % QUOTES.length;
+    $('quText').textContent = '“' + QUOTES[quIdx][0] + '”';
+    $('quBy').textContent = '— ' + QUOTES[quIdx][1];
+  }
+  function showDailyQuote(d) {
+    const dayNo = Math.floor(new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime() / 86400000);
+    showQuote(dayNo);
+  }
+  $('quNext').addEventListener('click', () => showQuote(quIdx + 1 + rand(QUOTES.length - 1)));
+
+  clock();
+  setInterval(clock, 1000);
+})();
+</script>
+</body>
+</html>
