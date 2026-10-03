@@ -46,6 +46,7 @@
   header h1 span { color: var(--yellow); }
   .hint { color: var(--chalk-dim); font-size: 14px; }
   header button { font-size: 15px; padding: .35em 1em; }
+  header .row { gap: 8px; }
 
   /* ---------- 위젯 격자 ---------- */
   main {
@@ -221,6 +222,63 @@
   .corner { position: absolute; top: calc(3 * var(--u)); right: calc(3 * var(--u)); display: flex; gap: calc(1 * var(--u)); }
   .corner button { font-size: clamp(12px, calc(3.6 * var(--u)), 28px); padding: .25em .7em; }
 
+  .plan-note { font-size: clamp(11px, calc(3.2 * var(--u)), 24px); color: var(--chalk-dim); font-weight: 700; }
+  .plan-note:empty { display: none; }
+
+  /* ---------- 구글 시트로 미리 쓰기 ---------- */
+  [hidden] { display: none !important; }
+  .overlay {
+    position: fixed;
+    top: 0; right: 0; bottom: 0; left: 0;
+    z-index: 200;
+    background: rgba(0, 0, 0, .6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+  }
+  .panel {
+    --accent: var(--sky);
+    width: 100%;
+    max-width: 920px;
+    max-height: 100%;
+    overflow: auto;
+    background: var(--card);
+    border: 1px solid var(--card-edge);
+    border-top: 6px solid var(--accent);
+    border-radius: var(--radius);
+    padding: 24px 28px;
+    font-size: 18px;
+    line-height: 1.55;
+    user-select: text;
+  }
+  .panel h2 { margin: 0 0 8px; font-size: 26px; color: var(--accent); }
+  .panel p { margin: 8px 0; }
+  .panel ol { margin: 8px 0 12px; padding-left: 1.4em; }
+  .panel li { margin: 4px 0; }
+  .panel kbd { background: rgba(255, 255, 255, .15); border-radius: 6px; padding: 0 .35em; font-family: inherit; font-size: .9em; }
+  .panel label { display: block; margin-top: 14px; font-weight: 800; }
+  .panel input {
+    width: 100%;
+    margin: 6px 0 12px;
+    padding: 12px 14px;
+    font: inherit;
+    color: var(--chalk);
+    background: rgba(0, 0, 0, .25);
+    border: 2px solid rgba(255, 255, 255, .2);
+    border-radius: 12px;
+    user-select: text;
+  }
+  .panel input:focus { outline: none; border-color: var(--accent); }
+  .panel button { font-size: 17px; }
+  .row.left { justify-content: flex-start; gap: 8px; }
+  .sample-wrap { overflow-x: auto; margin: 8px 0; }
+  .sample { border-collapse: collapse; font-size: 15px; min-width: 620px; width: 100%; }
+  .sample th, .sample td { border: 1px solid rgba(255, 255, 255, .2); padding: 4px 8px; text-align: left; vertical-align: top; }
+  .sample th { background: rgba(255, 255, 255, .1); }
+  .status { font-weight: 700; color: var(--mint); }
+  .status.bad { color: var(--red); }
+
   /* ---------- 오른쪽 아래 현재 시간 ---------- */
   footer {
     position: fixed;
@@ -260,6 +318,7 @@
   <h1>🧑‍🏫 만능 <span>칠판</span></h1>
   <div class="row">
     <span class="hint">위젯을 누르면 크게, 다시 누르면 원래대로</span>
+    <button id="planBtn" title="구글 시트에 미리 써 둔 활동·질문·명언 불러오기">📋 미리 쓰기</button>
     <button id="fsBtn" class="small" title="브라우저 전체화면">⛶ 전체화면</button>
   </div>
 </header>
@@ -366,7 +425,8 @@
     <h2 class="label">📝 오늘의 활동</h2>
     <div class="corner"><button class="edit-btn" data-target="actText">✏️ 편집</button></div>
     <div class="body">
-      <div class="text" id="actText" data-key="activity"></div>
+      <div class="text" id="actText" data-kind="activity"></div>
+      <div class="plan-note" id="actNote"></div>
     </div>
   </section>
 
@@ -378,7 +438,8 @@
       <button class="edit-btn" data-target="qText">✏️ 편집</button>
     </div>
     <div class="body">
-      <div class="text" id="qText" data-key="question"></div>
+      <div class="text" id="qText" data-kind="question"></div>
+      <div class="plan-note" id="qNote"></div>
     </div>
   </section>
 
@@ -389,9 +450,44 @@
     <div class="body">
       <div class="text quote-text" id="quText"></div>
       <div class="quote-by" id="quBy"></div>
+      <div class="plan-note" id="quNote"></div>
     </div>
   </section>
 </main>
+
+<!-- 구글 시트로 미리 쓰기 -->
+<div class="overlay" id="settings" hidden>
+  <div class="panel" role="dialog" aria-labelledby="settingsTitle">
+    <h2 id="settingsTitle">📋 구글 시트로 미리 쓰기</h2>
+    <p>집이나 휴대폰에서 구글 시트에 적어 두면, 칠판이 인터넷으로 읽어 와서 그날 보여 줘요.</p>
+    <ol>
+      <li>구글 시트를 새로 만들고 첫 줄에 <b>날짜 · 활동 · 질문 · 명언 · 말한 사람</b>을 적어요.</li>
+      <li>둘째 줄부터 미리 써 둬요. <b>날짜를 적은 줄</b>은 그날 나오고, <b>날짜를 비운 줄</b>은 수업 날마다 위에서부터 하나씩 차례로 나와요. 칸 하나에 여러 줄을 쓰려면 <kbd>Alt</kbd>+<kbd>Enter</kbd>를 눌러요.</li>
+      <li>시트 오른쪽 위 <b>공유</b> → 일반 액세스를 <b>링크가 있는 모든 사용자</b>로 바꾸고 <b>링크 복사</b>를 눌러요.</li>
+      <li>아래 칸에 복사한 링크를 그대로 붙여 넣고 <b>연결하기</b>를 눌러요. 칠판마다 처음 한 번만 하면 돼요.<br><span class="muted">링크 대신 주소 가운데의 시트 ID(<code>/d/</code>와 <code>/edit</code> 사이 글자)만 넣어도 돼요.</span></li>
+    </ol>
+    <div class="sample-wrap">
+      <table class="sample">
+        <thead><tr><th>날짜</th><th>활동</th><th>질문</th><th>명언</th><th>말한 사람</th></tr></thead>
+        <tbody>
+          <tr><td>2026. 10. 7</td><td>1. 독서 10분<br>2. 모둠 발표</td><td>가장 기억에 남는 책은?</td><td>시작이 반이다.</td><td>아리스토텔레스</td></tr>
+          <tr><td></td><td></td><td>오늘 기대되는 일은?</td><td>천 리 길도 한 걸음부터.</td><td>속담</td></tr>
+          <tr><td></td><td></td><td>나를 한 단어로 표현하면?</td><td></td><td></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="muted">비어 있는 칸은 건너뛰어요. 시트에 아무것도 없는 날에는 활동은 마지막에 쓴 내용, 질문과 명언은 기본 목록에서 나와요. 칠판에서 ✏️ 편집이나 🎲로 바꾼 내용은 그날 하루만 보여요.</p>
+    <label for="sheetUrl">구글 시트 링크 (또는 시트 ID)</label>
+    <input id="sheetUrl" type="url" inputmode="url" autocomplete="off" placeholder="https://docs.google.com/spreadsheets/d/…">
+    <div class="row left">
+      <button class="primary" id="sheetConnect">연결하기</button>
+      <button id="sheetRefresh">지금 새로 불러오기</button>
+      <button id="sheetDisconnect">연결 끊기</button>
+      <button id="settingsClose">닫기</button>
+    </div>
+    <p id="sheetStatus" class="status"></p>
+  </div>
+</div>
 
 <!-- 오른쪽 아래 현재 시간 -->
 <footer><span class="dot"></span><span id="footClock"></span></footer>
@@ -423,12 +519,14 @@
     });
   });
   document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && window.ibwCloseOverlay && window.ibwCloseOverlay()) return;
     const open = document.querySelector('.card.expanded');
     if (e.key === 'Escape' && open && !document.activeElement.isContentEditable) toggleCard(open);
   });
 
   // 안드로이드 앱: 뒤로가기 버튼이 확대된 위젯을 먼저 닫음 (닫았으면 true)
   window.ibwBack = () => {
+    if (window.ibwCloseOverlay && window.ibwCloseOverlay()) return true;
     const open = document.querySelector('.card.expanded');
     if (!open) return false;
     if (document.activeElement && document.activeElement.isContentEditable) document.activeElement.blur();
@@ -632,15 +730,17 @@
     $('footClock').textContent = `${ampm} ${h12}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
     const dayKey = d.toDateString();
     if (dayKey !== lastDay) {
+      const dayChanged = lastDay !== '';
       lastDay = dayKey;
       $('dYear').textContent = `${d.getFullYear()}년`;
       $('dDate').textContent = `${d.getMonth() + 1}월 ${d.getDate()}일`;
       $('dDay').textContent = DAYS[d.getDay()];
-      showDailyQuote(d);
+      renderTexts(d);
+      if (dayChanged && sheet && sheet.url) loadSheet(sheet.url);
     }
   }
 
-  /* ================= 7·8. 오늘의 활동 / 질문 (편집 가능) ================= */
+  /* ================= 7·8·9. 오늘의 활동 / 질문 / 명언 ================= */
   const QUESTIONS = [
     '요즘 나를 가장 웃게 만드는 것은 무엇인가요?',
     '내가 초능력을 하나 가질 수 있다면 무엇을 고를까요?',
@@ -659,39 +759,6 @@
     '오늘 누군가를 도울 수 있는 방법은?',
   ];
   const DEFAULT_ACTIVITY = '1. 인사 나누기\n2. 오늘의 학습 목표 확인\n3. 모둠 활동\n4. 발표 및 정리';
-
-  const actEl = $('actText');
-  const qEl = $('qText');
-  actEl.textContent = store.get('activity', DEFAULT_ACTIVITY);
-  qEl.textContent = store.get('question', QUESTIONS[new Date().getDate() % QUESTIONS.length]);
-
-  document.querySelectorAll('.edit-btn').forEach((btn) => {
-    const el = $(btn.dataset.target);
-    const finish = () => {
-      el.contentEditable = 'false';
-      btn.textContent = '✏️ 편집';
-      store.set(el.dataset.key, el.innerText.trim());
-    };
-    btn.addEventListener('click', () => {
-      if (el.isContentEditable) { finish(); return; }
-      el.contentEditable = 'true';
-      btn.textContent = '✅ 완료';
-      el.focus();
-      const sel = getSelection();
-      sel.selectAllChildren(el);
-      sel.collapseToEnd();
-    });
-    el.addEventListener('blur', () => setTimeout(() => { if (el.isContentEditable && document.activeElement !== el) finish(); }, 150));
-    el.addEventListener('keydown', (e) => { if (e.key === 'Escape') el.blur(); });
-  });
-  let qIdx = rand(QUESTIONS.length);
-  $('qNext').addEventListener('click', () => {
-    qIdx = (qIdx + 1 + rand(QUESTIONS.length - 1)) % QUESTIONS.length;
-    qEl.textContent = QUESTIONS[qIdx];
-    store.set('question', qEl.textContent);
-  });
-
-  /* ================= 9. 오늘의 명언 ================= */
   const QUOTES = [
     ['천 리 길도 한 걸음부터.', '속담'],
     ['배우고 때때로 익히면 또한 기쁘지 아니한가.', '공자'],
@@ -724,17 +791,231 @@
     ['재능은 노력하는 사람을 이길 수 없다.', '격언'],
     ['교육은 세상을 바꿀 수 있는 가장 강력한 무기이다.', '넬슨 만델라'],
   ];
-  let quIdx = 0;
-  function showQuote(i) {
-    quIdx = (i + QUOTES.length) % QUOTES.length;
-    $('quText').textContent = '“' + QUOTES[quIdx][0] + '”';
-    $('quBy').textContent = '— ' + QUOTES[quIdx][1];
+
+  const readJSON = (k, d) => { try { const v = store.get(k, null); return v === null ? d : JSON.parse(v); } catch (e) { return d; } };
+  const writeJSON = (k, v) => store.set(k, JSON.stringify(v));
+  const dayKeyOf = (d) => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+  const dayNoOf = (d) => Math.floor(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 86400000);
+
+  const actEl = $('actText');
+  const qEl = $('qText');
+
+  // 구글 시트에서 불러온 내용 (인터넷이 끊겨도 마지막 내용을 그대로 사용)
+  let sheet = readJSON('sheet', null); // { url, csvUrl, fetchedAt, rows: [{ date, activity, question, quote, by }] }
+
+  // 시트에서 오늘 보여 줄 줄: 오늘 날짜가 적힌 줄 → 없으면 날짜 없는 줄을 수업 날마다 하나씩 차례로
+  function fromSheet(kind, d) {
+    if (!sheet || !sheet.rows) return null;
+    const key = dayKeyOf(d);
+    const has = (r) => r[kind] && r[kind].trim();
+    const dated = sheet.rows.filter((r) => r.date === key && has(r));
+    if (dated.length) return { row: dated[0], note: `📅 구글 시트 · ${d.getMonth() + 1}월 ${d.getDate()}일` };
+    const seq = sheet.rows.filter((r) => !r.date && has(r));
+    if (!seq.length) return null;
+    let cur = readJSON('cursor:' + kind, null);
+    if (!cur || typeof cur.idx !== 'number') cur = { day: key, idx: 0 };
+    else if (cur.day !== key) cur = { day: key, idx: cur.idx + 1 };
+    cur.idx %= seq.length;
+    writeJSON('cursor:' + kind, cur);
+    return { row: seq[cur.idx], note: `📋 구글 시트 ${cur.idx + 1}/${seq.length}번째` };
   }
-  function showDailyQuote(d) {
-    const dayNo = Math.floor(new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime() / 86400000);
-    showQuote(dayNo);
+  // 칠판에서 직접 고치거나 🎲로 바꾼 것은 그날 하루만 우선
+  const todayOverride = (kind, d) => {
+    const o = readJSON('override:' + kind, null);
+    return o && o.day === dayKeyOf(d) ? o : null;
+  };
+
+  let quote = { text: '', by: '' };
+  function renderTexts(d = new Date()) {
+    let o = todayOverride('activity', d), s = !o && fromSheet('activity', d);
+    actEl.textContent = o ? o.text : s ? s.row.activity : store.get('activity', DEFAULT_ACTIVITY);
+    $('actNote').textContent = s ? s.note : '';
+
+    o = todayOverride('question', d); s = !o && fromSheet('question', d);
+    qEl.textContent = o ? o.text : s ? s.row.question : QUESTIONS[dayNoOf(d) % QUESTIONS.length];
+    $('qNote').textContent = s ? s.note : '';
+
+    o = todayOverride('quote', d); s = !o && fromSheet('quote', d);
+    if (o) quote = { text: o.text, by: o.by || '' };
+    else if (s) quote = { text: s.row.quote, by: s.row.by || '' };
+    else { const q = QUOTES[dayNoOf(d) % QUOTES.length]; quote = { text: q[0], by: q[1] }; }
+    $('quText').textContent = '“' + quote.text.trim() + '”';
+    $('quBy').textContent = quote.by ? '— ' + quote.by : '';
+    $('quNote').textContent = s ? s.note : '';
   }
-  $('quNext').addEventListener('click', () => showQuote(quIdx + 1 + rand(QUOTES.length - 1)));
+
+  document.querySelectorAll('.edit-btn').forEach((btn) => {
+    const el = $(btn.dataset.target);
+    const kind = el.dataset.kind;
+    const finish = () => {
+      el.contentEditable = 'false';
+      btn.textContent = '✏️ 편집';
+      const text = el.innerText.trim();
+      writeJSON('override:' + kind, { day: dayKeyOf(new Date()), text });
+      if (kind === 'activity') store.set('activity', text); // 시트가 없을 때 다음 날에도 이어서 사용
+      renderTexts();
+    };
+    btn.addEventListener('click', () => {
+      if (el.isContentEditable) { finish(); return; }
+      el.contentEditable = 'true';
+      btn.textContent = '✅ 완료';
+      el.focus();
+      const sel = getSelection();
+      sel.selectAllChildren(el);
+      sel.collapseToEnd();
+    });
+    el.addEventListener('blur', () => setTimeout(() => { if (el.isContentEditable && document.activeElement !== el) finish(); }, 150));
+    el.addEventListener('keydown', (e) => { if (e.key === 'Escape') el.blur(); });
+  });
+
+  const pickOther = (list, now) => {
+    const pool = list.filter((x) => x !== now);
+    return pool.length ? pool[rand(pool.length)] : now;
+  };
+  // 🎲는 날짜를 비운 줄(또는 오늘 날짜 줄)에서만 고름 — 다른 날로 정해 둔 내용은 아껴 둠
+  const sheetPool = () => {
+    const key = dayKeyOf(new Date());
+    return sheet && sheet.rows ? sheet.rows.filter((r) => !r.date || r.date === key) : [];
+  };
+  $('qNext').addEventListener('click', () => {
+    const mine = sheetPool().map((r) => r.question).filter((x) => x && x.trim());
+    const text = pickOther(mine.length ? mine : QUESTIONS, qEl.textContent);
+    writeJSON('override:question', { day: dayKeyOf(new Date()), text });
+    renderTexts();
+  });
+  $('quNext').addEventListener('click', () => {
+    const mine = sheetPool().filter((r) => r.quote && r.quote.trim()).map((r) => [r.quote, r.by || '']);
+    const list = mine.length ? mine : QUOTES;
+    const pool = list.filter((q) => q[0] !== quote.text);
+    const q = pool.length ? pool[rand(pool.length)] : list[0];
+    writeJSON('override:quote', { day: dayKeyOf(new Date()), text: q[0], by: q[1] });
+    renderTexts();
+  });
+
+  /* ================= 구글 시트 연결 ================= */
+  // 공유 링크(…/spreadsheets/d/ID/edit…), 웹에 게시 링크(…/d/e/…/pub…), 시트 ID만 넣어도 CSV 주소로 바꿈
+  function sheetCsvUrl(input) {
+    const s = String(input || '').trim();
+    const gid = (s.match(/[#&?]gid=(\d+)/) || [])[1];
+    let m = s.match(/\/spreadsheets\/d\/e\/([\w-]+)/);
+    if (m) return `https://docs.google.com/spreadsheets/d/e/${m[1]}/pub?output=csv` + (gid ? '&gid=' + gid : '');
+    m = s.match(/\/spreadsheets\/d\/([\w-]+)/);
+    if (m) return `https://docs.google.com/spreadsheets/d/${m[1]}/gviz/tq?tqx=out:csv&headers=1` + (gid ? '&gid=' + gid : '');
+    if (/^[\w-]{25,}$/.test(s)) return `https://docs.google.com/spreadsheets/d/${s}/gviz/tq?tqx=out:csv&headers=1`; // 시트 ID만 넣은 경우
+    return null;
+  }
+  function parseCSV(text) {
+    const rows = [];
+    let row = [], cell = '', q = false;
+    text = text.replace(/^﻿/, '');
+    for (let i = 0; i < text.length; i++) {
+      const c = text[i];
+      if (q) {
+        if (c === '"') { if (text[i + 1] === '"') { cell += '"'; i++; } else q = false; }
+        else cell += c;
+      } else if (c === '"') q = true;
+      else if (c === ',') { row.push(cell); cell = ''; }
+      else if (c === '\n' || c === '\r') {
+        if (c === '\r' && text[i + 1] === '\n') i++;
+        row.push(cell); rows.push(row); row = []; cell = '';
+      } else cell += c;
+    }
+    if (cell !== '' || row.length) { row.push(cell); rows.push(row); }
+    return rows;
+  }
+  // "2026. 10. 7", "2026-10-07", "10/7/2026", "10월 7일", "10/7" → "2026-10-07"
+  function parseDate(v, year) {
+    v = String(v || '').trim();
+    if (!v) return '';
+    const n = v.match(/\d+/g) || [];
+    let y = year, m, d;
+    if (n.length >= 3 && n[0].length === 4) { y = +n[0]; m = +n[1]; d = +n[2]; }
+    else if (n.length >= 3 && n[2].length === 4) { m = +n[0]; d = +n[1]; y = +n[2]; }
+    else if (n.length === 2) { m = +n[0]; d = +n[1]; }
+    if (!(m >= 1 && m <= 12 && d >= 1 && d <= 31)) return '?'; // 알아볼 수 없는 날짜는 쓰지 않음
+    return y + '-' + pad(m) + '-' + pad(d);
+  }
+  function sheetRows(table) {
+    const head = (table[0] || []).map((h) => h.replace(/\s/g, ''));
+    const col = (re) => head.findIndex((h) => re.test(h));
+    const c = {
+      date: col(/날짜|일자|date/i), activity: col(/활동/), question: col(/질문/),
+      quote: col(/명언/), by: col(/말한|사람|출처|인물|저자/),
+    };
+    if (c.activity < 0 && c.question < 0 && c.quote < 0) {
+      throw new Error('시트 첫 줄에 "날짜, 활동, 질문, 명언, 말한 사람" 제목이 있어야 해요.');
+    }
+    const year = new Date().getFullYear();
+    const get = (r, i) => (i >= 0 && r[i] ? r[i].trim() : '');
+    return table.slice(1).map((r) => ({
+      date: parseDate(get(r, c.date), year),
+      activity: get(r, c.activity), question: get(r, c.question),
+      quote: get(r, c.quote), by: get(r, c.by),
+    })).filter((r) => r.activity || r.question || r.quote);
+  }
+  window.ibwSheet = { parseCSV, sheetRows, parseDate, sheetCsvUrl }; // 확인용
+
+  const fmtTime = (t) => { const d = new Date(t); return `${d.getMonth() + 1}월 ${d.getDate()}일 ${d.getHours()}:${pad(d.getMinutes())}`; };
+  function showSheetStatus(msg, bad) {
+    const el = $('sheetStatus');
+    if (!msg) {
+      if (sheet && sheet.rows) {
+        const count = (k) => sheet.rows.filter((r) => r[k]).length;
+        msg = `✅ 연결됨 · ${fmtTime(sheet.fetchedAt)}에 불러옴 · 활동 ${count('activity')}개, 질문 ${count('question')}개, 명언 ${count('quote')}개`;
+      } else msg = '아직 연결된 시트가 없어요. 연결하기 전에는 기본 질문과 명언이 나와요.';
+    }
+    el.textContent = msg;
+    el.classList.toggle('bad', !!bad);
+  }
+  let loading = false;
+  async function loadSheet(url, fromUser) {
+    const csvUrl = sheetCsvUrl(url);
+    if (!csvUrl) { showSheetStatus('구글 시트 링크가 아닌 것 같아요. 시트의 "공유 → 링크 복사"로 받은 주소나 시트 ID를 넣어 주세요.', true); return; }
+    if (loading) return;
+    loading = true;
+    if (fromUser) showSheetStatus('불러오는 중…');
+    try {
+      const res = await fetch(csvUrl, { cache: 'no-store' });
+      const text = await res.text();
+      if (!res.ok || /^\s*</.test(text)) throw new Error('시트를 열 수 없어요. 공유 설정을 "링크가 있는 모든 사용자"로 바꿨는지 확인해 주세요.');
+      const rows = sheetRows(parseCSV(text));
+      sheet = { url, csvUrl, fetchedAt: Date.now(), rows };
+      writeJSON('sheet', sheet);
+      renderTexts();
+      showSheetStatus();
+    } catch (e) {
+      const offline = e instanceof TypeError; // fetch 자체 실패 = 인터넷 연결 문제
+      const msg = offline ? '인터넷에 연결할 수 없어요.' + (sheet && sheet.rows ? ' 마지막으로 불러온 내용을 그대로 보여 줘요.' : '') : e.message;
+      if (fromUser || !sheet) showSheetStatus(msg, true);
+    } finally {
+      loading = false;
+    }
+  }
+
+  const settings = $('settings');
+  const openSettings = () => {
+    $('sheetUrl').value = sheet ? sheet.url : '';
+    showSheetStatus();
+    settings.hidden = false;
+  };
+  const closeSettings = () => { settings.hidden = true; };
+  $('planBtn').addEventListener('click', openSettings);
+  $('settingsClose').addEventListener('click', closeSettings);
+  settings.addEventListener('click', (e) => { if (e.target === settings) closeSettings(); });
+  $('sheetConnect').addEventListener('click', () => loadSheet($('sheetUrl').value, true));
+  $('sheetRefresh').addEventListener('click', () => { if (sheet) loadSheet(sheet.url, true); else loadSheet($('sheetUrl').value, true); });
+  $('sheetDisconnect').addEventListener('click', () => {
+    sheet = null;
+    store.set('sheet', 'null');
+    $('sheetUrl').value = '';
+    renderTexts();
+    showSheetStatus('연결을 끊었어요. 이제 기본 질문과 명언이 나와요.');
+  });
+  window.ibwCloseOverlay = () => { if (settings.hidden) return false; closeSettings(); return true; };
+
+  // 앱을 켤 때, 30분마다, 날짜가 바뀔 때 시트를 새로 불러옴
+  if (sheet && sheet.url) loadSheet(sheet.url);
+  setInterval(() => { if (sheet && sheet.url) loadSheet(sheet.url); }, 30 * 60 * 1000);
 
   clock();
   setInterval(clock, 1000);

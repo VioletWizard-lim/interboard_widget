@@ -16,6 +16,7 @@ public class MainActivity extends Activity {
     private WebView web;
 
     @Override
+    @SuppressWarnings("deprecation")
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         // 수업 중 화면이 꺼지지 않게
@@ -26,6 +27,9 @@ public class MainActivity extends Activity {
         s.setJavaScriptEnabled(true);
         s.setDomStorageEnabled(true);                 // 오늘의 활동/질문 저장
         s.setMediaPlaybackRequiresUserGesture(false); // 타이머 종료 종소리
+        // 앱 안의 index.html(file://)에서 구글 시트(https://)를 읽을 수 있게
+        s.setAllowFileAccessFromFileURLs(true);
+        s.setAllowUniversalAccessFromFileURLs(true);
         s.setUserAgentString(s.getUserAgentString() + " InterboardWidgetApp");
         web.setWebViewClient(new WebViewClient());
         web.setWebChromeClient(new WebChromeClient());
