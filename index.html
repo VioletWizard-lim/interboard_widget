@@ -36,27 +36,55 @@
 
   /* ---------- 상단 바 ---------- */
   header {
-    height: 56px;
+    height: 64px;
+    gap: 16px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 0 20px;
   }
-  header h1 { margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -.5px; }
-  header h1 span { color: var(--yellow); }
-  .hint { color: var(--chalk-dim); font-size: 14px; }
+  .class-title { margin: 0; font-size: clamp(18px, 2.2vw, 40px); font-weight: 800; letter-spacing: -.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .title-edit {
+    color: var(--yellow);
+    border-bottom: 3px dashed rgba(255, 213, 74, .55);
+    padding: 0 .15em;
+    cursor: text;
+    outline: none;
+  }
+  header .ver { font-size: 14px; color: var(--chalk-dim); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .about-table { border-collapse: collapse; margin: 8px 0 14px; font-size: 18px; }
+  .about-table th { text-align: left; color: var(--chalk-dim); font-weight: 700; padding: 6px 24px 6px 0; white-space: nowrap; vertical-align: top; }
+  .about-table td { padding: 6px 0; font-weight: 800; }
+  .changelog { margin: 6px 0 14px; padding-left: 1.2em; font-size: 16px; }
+  .changelog b { color: var(--accent); }
+  .title-edit[contenteditable="true"] { background: rgba(0, 0, 0, .3); border-bottom-style: solid; user-select: text; }
   header button { font-size: 15px; padding: .35em 1em; }
   header .row { gap: 8px; }
 
   /* ---------- 위젯 격자 ---------- */
+  /* 스케치 배치: 질문|타이머 / 활동|점수판 / 작은 위젯 줄 + 명언 */
   main {
-    height: calc(100% - 56px - 64px);
-    padding: 0 var(--gap);
+    height: calc(100% - 64px);
+    padding: 0 var(--gap) var(--gap);
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    grid-template-rows: repeat(3, 1fr);
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) minmax(0, 2.9fr) minmax(0, 1fr);
+    grid-template-areas: "question timer" "activity score" "bottom bottom";
     gap: var(--gap);
   }
+  #question { grid-area: question; }
+  #timer { grid-area: timer; }
+  #activity { grid-area: activity; }
+  #score { grid-area: score; }
+  .bottom {
+    grid-area: bottom;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr)) minmax(0, 2.8fr);
+    gap: var(--gap);
+  }
+  /* 작게 있을 때는 핵심만, 크게 펼치면 세부 설정까지 */
+  .card:not(.expanded) .x-only { display: none !important; }
   .card {
     --u: 1cqmin; /* 위젯 크기 기준 단위 (구형 WebView는 JS가 px로 대신 계산) */
     --accent: var(--yellow);
@@ -97,7 +125,7 @@
   }
   .card.expanded {
     position: fixed;
-    top: 14px; right: 14px; bottom: 78px; left: 14px;
+    top: 14px; right: 14px; bottom: 14px; left: 14px;
     z-index: 50;
     cursor: zoom-out;
     box-shadow: 0 20px 80px rgba(0, 0, 0, .6);
@@ -156,7 +184,7 @@
   .t-display.warn { color: var(--red); }
   .t-bar { width: 80%; height: calc(2.4 * var(--u)); min-height: 6px; background: rgba(255, 255, 255, .12); border-radius: 99px; overflow: hidden; }
   .t-bar > div { height: 100%; width: 100%; background: var(--accent); transition: width .25s linear; }
-  .done { animation: flash .5s ease-in-out 6; }
+  .t-done { animation: flash .5s ease-in-out 6; }
   @keyframes flash { 50% { background: #7a2f2f; } }
 
   /* ---------- 번호 / 모둠 뽑기 ---------- */
@@ -328,26 +356,107 @@
   .status { font-weight: 700; color: var(--mint); }
   .status.bad { color: var(--red); }
 
-  /* ---------- 오른쪽 아래 현재 시간 ---------- */
-  footer {
-    position: fixed;
-    right: 18px;
-    bottom: 12px;
-    z-index: 100;
+
+  /* ---------- 작은 칸 (집중벨·날짜·시간·발표자·발표모둠) ---------- */
+  #date { --accent: var(--mint); }
+  #time { --accent: var(--violet); }
+  #number { --accent: var(--sky); }
+  #group { --accent: var(--pink); }
+  .tile:not(.expanded) { padding: 12px 14px; }
+  .tile:not(.expanded) > .label { font-size: clamp(15px, calc(14 * var(--u)), 30px); }
+  .tile:not(.expanded) .body { gap: calc(4 * var(--u)); }
+  .wide:not(.expanded) .corner button { font-size: clamp(14px, calc(11 * var(--u)), 26px); }
+  .tile:not(.expanded) .bell-btn { font-size: calc(60 * var(--u)); }
+  .tile:not(.expanded) .big-date { font-size: calc(27 * var(--u)); }
+  .tile:not(.expanded) .big-day { font-size: calc(20 * var(--u)); }
+  .tile:not(.expanded) .sub { font-size: calc(13 * var(--u)); }
+  .tile:not(.expanded) .big-time { font-size: calc(31 * var(--u)); }
+  .tile:not(.expanded) .ampm { font-size: calc(16 * var(--u)); }
+  .tile:not(.expanded) .pick { font-size: calc(50 * var(--u)); }
+  .tile:not(.expanded) button { font-size: clamp(15px, calc(15 * var(--u)), 30px); }
+  #date .body, #time .body { gap: calc(2 * var(--u)); }
+  .big-date, .big-time { white-space: nowrap; }
+
+  /* ---------- 납작한 칸 (질문·타이머) ---------- */
+  .wide:not(.expanded) { padding: 14px 20px; }
+  .wide:not(.expanded) > .label { font-size: clamp(16px, calc(14 * var(--u)), 32px); }
+  #question:not(.expanded) .text { font-size: clamp(20px, calc(24 * var(--u)), 60px); }
+  #timer:not(.expanded) .body {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas: "disp presets" "disp ctrl" "bar bar";
+    column-gap: calc(8 * var(--u));
+    row-gap: calc(3 * var(--u));
+    align-content: center;
+    justify-items: center;
+  }
+  #timer:not(.expanded) .t-display { grid-area: disp; font-size: calc(72 * var(--u)); }
+  #timer:not(.expanded) .t-presets { grid-area: presets; }
+  #timer:not(.expanded) .t-ctrl { grid-area: ctrl; }
+  #timer:not(.expanded) .t-bar { grid-area: bar; width: 100%; }
+  #timer:not(.expanded) .t-adj { display: none; }
+  #timer:not(.expanded) button { font-size: clamp(16px, calc(14 * var(--u)), 32px); }
+
+  /* ---------- 오늘의 활동 체크리스트 ---------- */
+  .act-progress { font-size: .6em; color: var(--chalk-dim); font-weight: 700; margin-left: .3em; }
+  .act-list:not([contenteditable="true"]) {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: calc(2 * var(--u));
+    text-align: left;
+    white-space: normal;
+    font-size: calc(7.5 * var(--u));
+  }
+  .act-item {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 8px 20px;
-    border-radius: 999px;
-    background: rgba(0, 0, 0, .45);
-    border: 1px solid rgba(255, 255, 255, .15);
-    font-size: 26px;
-    font-weight: 800;
-    font-variant-numeric: tabular-nums;
-    backdrop-filter: blur(6px);
+    gap: .55em;
+    padding: .25em .5em;
+    border-radius: 14px;
+    cursor: pointer;
+    touch-action: manipulation;
+    border: 3px solid transparent;
   }
-  footer .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--mint); animation: blink 1s steps(2) infinite; }
-  @keyframes blink { 50% { opacity: .2; } }
+  .act-box {
+    flex: none;
+    width: 1.05em;
+    height: 1.05em;
+    border: .12em solid var(--chalk);
+    border-radius: .2em;
+    display: grid;
+    place-items: center;
+    font-size: 1em;
+    line-height: 1;
+  }
+  .act-item.done .act-box { background: var(--mint); border-color: var(--mint); }
+  .act-item.done .act-box::after { content: "✓"; color: #1d2b25; font-size: .8em; font-weight: 900; }
+  .act-item.done .act-text { color: var(--chalk-dim); text-decoration: line-through; text-decoration-thickness: .08em; opacity: .7; }
+  .act-item.now { background: rgba(255, 158, 87, .16); border-color: var(--orange); }
+  .act-item.now .act-box { border-color: var(--orange); }
+  .act-item.now::after {
+    content: "지금 하는 중";
+    margin-left: auto;
+    flex: none;
+    font-size: .5em;
+    font-weight: 900;
+    color: #1d2b25;
+    background: var(--orange);
+    border-radius: 99px;
+    padding: .15em .7em;
+  }
+  .act-item.now .act-text { color: var(--chalk); }
+  .act-all-done { font-size: .7em; color: var(--mint); font-weight: 900; text-align: center; }
+
+  /* ---------- 명언 한 줄 ---------- */
+  .quote-cat { font-size: .7em; color: var(--chalk-dim); font-weight: 700; }
+  .quote-bar:not(.expanded) { padding: 12px 18px; }
+  .quote-bar:not(.expanded) > .label { font-size: clamp(15px, calc(14 * var(--u)), 30px); }
+  .quote-bar:not(.expanded) .body { gap: calc(2 * var(--u)); }
+  .quote-bar:not(.expanded) .quote-text { font-size: clamp(18px, calc(18 * var(--u)), 44px); }
+  .quote-bar:not(.expanded) .quote-by { font-size: clamp(14px, calc(12 * var(--u)), 30px); }
+  .quote-bar:not(.expanded) .corner button { font-size: clamp(15px, calc(14 * var(--u)), 28px); }
 
   /* 확대/축소 부드러운 전환 (지원 브라우저만) */
   ::view-transition-group(*) { animation-duration: .28s; }
@@ -355,138 +464,32 @@
   /* 작은 화면에서는 세로로 쌓기 */
   @media (max-width: 760px) {
     body { overflow: auto; }
-    header .hint { display: none; }
-    main { height: auto; grid-template-columns: 1fr; grid-template-rows: none; padding-bottom: 80px; }
+    header { height: auto; padding-block: 10px; flex-wrap: wrap; }
+    .class-title { white-space: normal; }
+    main { height: auto; grid-template-columns: 1fr; grid-template-rows: none; grid-template-areas: "activity" "timer" "score" "question" "bottom"; }
     .card { height: 46vh; }
-    footer { font-size: 20px; }
+    .wide, .tile, .quote-bar { height: 30vh; }
+    .bottom { grid-template-columns: 1fr 1fr; }
+    .quote-bar { grid-column: 1 / -1; }
   }
 </style>
 </head>
 <body>
 <header>
-  <h1>🧑‍🏫 만능 <span>칠판</span></h1>
+  <h1 class="class-title">
+    <span class="title-edit" id="tName" data-key="teacherName" data-ph="OOO" role="textbox" title="눌러서 이름 바꾸기">OOO</span> 선생님과 함께하는 즐거운
+    <span class="title-edit" id="tSubj" data-key="subject" data-ph="OO" role="textbox" title="눌러서 과목 바꾸기">OO</span> 수업
+  </h1>
   <div class="row">
-    <span class="hint">위젯을 누르면 크게, 다시 누르면 원래대로</span>
     <button id="planBtn" title="구글 시트에 미리 써 둔 활동·질문·명언 불러오기">📋 미리 쓰기</button>
     <button id="fsBtn" class="small" title="브라우저 전체화면">⛶ 전체화면</button>
+    <button class="ver" id="appVer" title="버전 · 만든 사람"></button>
   </div>
 </header>
 
 <main>
-  <!-- 1. 집중벨 -->
-  <section class="card" id="bell" style="view-transition-name: bell">
-    <h2 class="label">🔔 집중벨</h2>
-    <div class="body">
-      <button class="bell-btn" data-bell="1" aria-label="집중벨 울리기">🔔</button>
-      <div class="bell-msg" id="bellMsg"></div>
-      <div class="row">
-        <button data-bell="1">한 번</button>
-        <button data-bell="3">세 번</button>
-      </div>
-    </div>
-  </section>
-
-  <!-- 2. 타이머 -->
-  <section class="card" id="timer" style="view-transition-name: timer">
-    <h2 class="label">⏱️ 타이머</h2>
-    <div class="body">
-      <div class="t-display" id="tDisplay">03:00</div>
-      <div class="t-bar"><div id="tBar"></div></div>
-      <div class="row" id="tPresets">
-        <button data-min="1">1분</button>
-        <button data-min="2">2분</button>
-        <button data-min="3" class="on">3분</button>
-        <button data-min="5">5분</button>
-        <button data-min="10">10분</button>
-      </div>
-      <div class="row">
-        <button data-adj="-60">−1분</button>
-        <button data-adj="-10">−10초</button>
-        <button data-adj="10">+10초</button>
-        <button data-adj="60">+1분</button>
-      </div>
-      <div class="row">
-        <button class="primary" id="tStart">▶ 시작</button>
-        <button id="tReset">↺ 다시</button>
-      </div>
-    </div>
-  </section>
-
-  <!-- 3. 랜덤 번호뽑기 -->
-  <section class="card" id="number" style="view-transition-name: number">
-    <h2 class="label">🎲 번호 뽑기</h2>
-    <div class="body">
-      <div class="pick" id="nPick">?</div>
-      <div class="row">
-        <div class="stepper">1 ~
-          <button data-n="-1">−</button><b id="nMax">30</b><button data-n="1">+</button>번
-        </div>
-      </div>
-      <div class="row">
-        <button class="primary" id="nGo">뽑기!</button>
-        <button id="nDup" class="on" title="한 번 나온 번호는 다시 나오지 않아요">중복 없이</button>
-        <button id="nReset">초기화</button>
-      </div>
-      <div class="history" id="nHist"></div>
-    </div>
-  </section>
-
-  <!-- 4. 날짜 · 시간 -->
-  <section class="card" id="datetime" style="view-transition-name: datetime">
-    <h2 class="label">📅 날짜 · 시간</h2>
-    <div class="body dt-body">
-      <div class="dt-date">
-        <span class="sub" id="dYear"></span>
-        <span class="big-date" id="dDate"></span>
-        <span class="big-day" id="dDay"></span>
-      </div>
-      <div class="dt-time">
-        <span class="ampm" id="tAmpm"></span>
-        <span class="big-time" id="tNow"></span>
-      </div>
-    </div>
-  </section>
-
-  <!-- 5. 모둠 점수판 -->
-  <section class="card" id="score" style="view-transition-name: score">
-    <h2 class="label">🏆 모둠 점수판</h2>
-    <div class="corner"><button id="sReset">↺ 초기화</button></div>
-    <div class="body">
-      <div class="score-grid" id="sGrid"></div>
-    </div>
-  </section>
-
-  <!-- 6. 랜덤 모둠뽑기 -->
-  <section class="card" id="group" style="view-transition-name: group">
-    <h2 class="label">👥 모둠 뽑기</h2>
-    <div class="body">
-      <div class="pick" id="gPick">?</div>
-      <div class="row">
-        <div class="stepper">
-          <button data-g="-1">−</button><b id="gMax">6</b><button data-g="1">+</button>모둠
-        </div>
-      </div>
-      <div class="row">
-        <button class="primary" id="gGo">뽑기!</button>
-        <button id="gDup" class="on" title="한 번 나온 모둠은 다시 나오지 않아요">중복 없이</button>
-        <button id="gReset">초기화</button>
-      </div>
-      <div class="history" id="gHist"></div>
-    </div>
-  </section>
-
-  <!-- 7. 오늘의 활동 -->
-  <section class="card" id="activity" style="view-transition-name: activity">
-    <h2 class="label">📝 오늘의 활동</h2>
-    <div class="corner"><button class="edit-btn" data-target="actText">✏️ 편집</button></div>
-    <div class="body">
-      <div class="text" id="actText" data-kind="activity"></div>
-      <div class="plan-note" id="actNote"></div>
-    </div>
-  </section>
-
-  <!-- 8. 오늘의 질문 -->
-  <section class="card" id="question" style="view-transition-name: question">
+  <!-- 오늘의 질문 -->
+  <section class="card wide" id="question" style="view-transition-name: question">
     <h2 class="label">❓ 오늘의 질문</h2>
     <div class="corner">
       <button id="qNext">🎲 다른 질문</button>
@@ -498,17 +501,149 @@
     </div>
   </section>
 
-  <!-- 9. 오늘의 명언 -->
-  <section class="card" id="quote" style="view-transition-name: quote">
-    <h2 class="label">💬 오늘의 명언</h2>
-    <div class="corner"><button id="quNext">🎲 다른 명언</button></div>
+  <!-- 타이머 -->
+  <section class="card wide" id="timer" style="view-transition-name: timer">
+    <h2 class="label">⏱️ 타이머</h2>
     <div class="body">
-      <div class="text quote-text" id="quText"></div>
-      <div class="quote-by" id="quBy"></div>
-      <div class="plan-note" id="quNote"></div>
+      <div class="t-display" id="tDisplay">03:00</div>
+      <div class="row t-presets" id="tPresets">
+        <button data-min="1">1분</button>
+        <button data-min="2">2분</button>
+        <button data-min="3" class="on">3분</button>
+        <button data-min="5">5분</button>
+        <button data-min="10">10분</button>
+      </div>
+      <div class="row t-adj">
+        <button data-adj="-60">−1분</button>
+        <button data-adj="-10">−10초</button>
+        <button data-adj="10">+10초</button>
+        <button data-adj="60">+1분</button>
+      </div>
+      <div class="row t-ctrl">
+        <button class="primary" id="tStart">▶ 시작</button>
+        <button id="tReset">↺ 다시</button>
+      </div>
+      <div class="t-bar"><div id="tBar"></div></div>
     </div>
   </section>
+
+  <!-- 오늘의 활동 (체크리스트) -->
+  <section class="card" id="activity" style="view-transition-name: activity">
+    <h2 class="label">📝 오늘의 활동 <span class="act-progress" id="actProgress"></span></h2>
+    <div class="corner"><button class="edit-btn" data-target="actText">✏️ 편집</button></div>
+    <div class="body">
+      <div class="text act-list" id="actText" data-kind="activity"></div>
+      <div class="plan-note" id="actNote"></div>
+    </div>
+  </section>
+
+  <!-- 모둠 점수판 -->
+  <section class="card" id="score" style="view-transition-name: score">
+    <h2 class="label">🏆 모둠 점수판</h2>
+    <div class="corner"><button id="sReset">↺ 초기화</button></div>
+    <div class="body">
+      <div class="score-grid" id="sGrid"></div>
+    </div>
+  </section>
+
+  <!-- 아래 줄: 작은 위젯 + 명언 -->
+  <div class="bottom">
+    <section class="card tile" id="bell" style="view-transition-name: bell">
+      <h2 class="label">🔔 집중벨</h2>
+      <div class="body">
+        <button class="bell-btn" data-bell="1" aria-label="집중벨 울리기">🔔</button>
+        <div class="bell-msg x-only" id="bellMsg"></div>
+        <div class="row x-only">
+          <button data-bell="1">한 번</button>
+          <button data-bell="3">세 번</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="card tile" id="date" style="view-transition-name: date">
+      <h2 class="label">📅 날짜</h2>
+      <div class="body">
+        <div class="sub" id="dYear"></div>
+        <div class="big-date" id="dDate"></div>
+        <div class="big-day" id="dDay"></div>
+      </div>
+    </section>
+
+    <section class="card tile" id="time" style="view-transition-name: time">
+      <h2 class="label">🕘 시간</h2>
+      <div class="body">
+        <div class="ampm" id="tAmpm"></div>
+        <div class="big-time" id="tNow"></div>
+      </div>
+    </section>
+
+    <section class="card tile" id="number" style="view-transition-name: number">
+      <h2 class="label">🙋 발표자</h2>
+      <div class="body">
+        <div class="pick" id="nPick">?</div>
+        <div class="row x-only">
+          <div class="stepper">1 ~
+            <button data-n="-1">−</button><b id="nMax">30</b><button data-n="1">+</button>번
+          </div>
+        </div>
+        <div class="row">
+          <button class="primary" id="nGo">뽑기!</button>
+          <button id="nDup" class="on x-only" title="한 번 나온 번호는 다시 나오지 않아요">중복 없이</button>
+          <button id="nReset" class="x-only">초기화</button>
+        </div>
+        <div class="history x-only" id="nHist"></div>
+      </div>
+    </section>
+
+    <section class="card tile" id="group" style="view-transition-name: group">
+      <h2 class="label">👥 발표모둠</h2>
+      <div class="body">
+        <div class="pick" id="gPick">?</div>
+        <div class="row x-only">
+          <div class="stepper">
+            <button data-g="-1">−</button><b id="gMax">6</b><button data-g="1">+</button>모둠
+          </div>
+        </div>
+        <div class="row">
+          <button class="primary" id="gGo">뽑기!</button>
+          <button id="gDup" class="on x-only" title="한 번 나온 모둠은 다시 나오지 않아요">중복 없이</button>
+          <button id="gReset" class="x-only">초기화</button>
+        </div>
+        <div class="history x-only" id="gHist"></div>
+      </div>
+    </section>
+
+    <section class="card quote-bar" id="quote" style="view-transition-name: quote">
+      <h2 class="label">💬 명언 <span class="quote-cat" id="quCat"></span></h2>
+      <div class="corner"><button id="quNext" aria-label="다른 명언">🎲</button></div>
+      <div class="body">
+        <div class="text quote-text" id="quText"></div>
+        <div class="quote-by" id="quBy"></div>
+        <div class="plan-note" id="quNote"></div>
+      </div>
+    </section>
+  </div>
 </main>
+
+<!-- 버전 · 만든 사람 -->
+<div class="overlay" id="about" hidden>
+  <div class="panel" role="dialog" aria-labelledby="aboutTitle">
+    <h2 id="aboutTitle">ℹ️ 만능 칠판 정보</h2>
+    <table class="about-table">
+      <tr><th>버전</th><td id="aboutVer"></td></tr>
+      <tr><th>제작자</th><td>VioletWizard (강화고 임재성)</td></tr>
+    </table>
+    <h3>업데이트 기록</h3>
+    <ul class="changelog">
+      <li><b>2.0</b> 새 화면 배치(질문·타이머 / 활동·점수판 / 작은 위젯 줄), 오늘의 활동 체크리스트와 "지금 하는 중" 표시, 선생님 이름·과목 제목, 인생·교육 명언, 버전 정보</li>
+      <li><b>1.3</b> 모둠 점수판, 날짜·시간 합치기</li>
+      <li><b>1.2</b> 구글 시트로 활동·질문·명언 미리 쓰기</li>
+      <li><b>1.1</b> 안드로이드 칠판 앱(APK)</li>
+      <li><b>1.0</b> 집중벨, 타이머, 번호·모둠 뽑기, 날짜, 시간, 오늘의 활동·질문·명언</li>
+    </ul>
+    <div class="row left"><button class="primary" id="aboutClose">닫기</button></div>
+  </div>
+</div>
 
 <!-- 구글 시트로 미리 쓰기 -->
 <div class="overlay" id="settings" hidden>
@@ -545,7 +680,6 @@
 </div>
 
 <!-- 오른쪽 아래 현재 시간 -->
-<footer><span class="dot"></span><span id="footClock"></span></footer>
 
 <script>
 (() => {
@@ -556,8 +690,19 @@
   };
   const rand = (n) => Math.floor(Math.random() * n);
 
+  // 버전: 기능을 바꿀 때마다 APP_VERSION 을 올림. 앱(APK)으로 만들 때는 빌드 번호가 자동으로 붙음
+  const APP_VERSION = '2.0';
+  const BUILD = '@@BUILD@@';
+  const verText = 'Ver ' + APP_VERSION + (/^\d+$/.test(BUILD) ? ` (빌드 ${BUILD})` : '');
+  $('appVer').textContent = verText;
+  $('aboutVer').textContent = verText;
+  const about = $('about');
+  $('appVer').addEventListener('click', () => { about.hidden = false; });
+  $('aboutClose').addEventListener('click', () => { about.hidden = true; });
+  about.addEventListener('click', (e) => { if (e.target === about) about.hidden = true; });
+
   /* ================= 위젯 확대 / 축소 ================= */
-  const INTERACTIVE = 'button, input, select, textarea, a, [contenteditable="true"], .history, .score-tile';
+  const INTERACTIVE = 'button, input, select, textarea, a, [contenteditable="true"], .history, .score-tile, .act-item';
   function toggleCard(card) {
     const apply = () => {
       const opening = !card.classList.contains('expanded');
@@ -659,14 +804,14 @@
   };
   function drawTimer() {
     const d = $('tDisplay');
-    d.textContent = remain <= 0 && total > 0 && !running && timerCard.classList.contains('done') ? '끝!' : fmt(remain);
+    d.textContent = remain <= 0 && total > 0 && !running && timerCard.classList.contains('t-done') ? '끝!' : fmt(remain);
     d.classList.toggle('warn', running && remain <= 10);
     $('tBar').style.width = (total ? Math.max(0, remain / total) * 100 : 0) + '%';
     $('tStart').textContent = running ? '⏸ 멈춤' : '▶ 시작';
   }
   function setTimer(sec) {
     stopTimer();
-    timerCard.classList.remove('done');
+    timerCard.classList.remove('t-done');
     total = remain = Math.max(0, Math.min(sec, 99 * 60 + 59));
     drawTimer();
   }
@@ -676,7 +821,7 @@
     if (remain <= 0) {
       remain = 0;
       stopTimer();
-      timerCard.classList.add('done');
+      timerCard.classList.add('t-done');
       ringBell(3);
     }
     drawTimer();
@@ -698,7 +843,7 @@
   }));
   $('tStart').addEventListener('click', () => {
     if (running) { stopTimer(); remain = Math.ceil(remain); drawTimer(); return; }
-    if (remain <= 0) { remain = total; timerCard.classList.remove('done'); }
+    if (remain <= 0) { remain = total; timerCard.classList.remove('t-done'); }
     if (remain <= 0) return;
     // 소리 재생 권한을 미리 얻어 두기 (브라우저 자동재생 정책)
     try { ac = ac || new (window.AudioContext || window.webkitAudioContext)(); ac.resume(); } catch (e) {}
@@ -859,7 +1004,6 @@
     const ampm = h < 12 ? '오전' : '오후';
     $('tAmpm').textContent = ampm;
     $('tNow').innerHTML = `${h12}:${pad(d.getMinutes())}<span class="sec">:${pad(d.getSeconds())}</span>`;
-    $('footClock').textContent = `${ampm} ${h12}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
     const dayKey = d.toDateString();
     if (dayKey !== lastDay) {
       const dayChanged = lastDay !== '';
@@ -891,37 +1035,43 @@
     '오늘 누군가를 도울 수 있는 방법은?',
   ];
   const DEFAULT_ACTIVITY = '1. 인사 나누기\n2. 오늘의 학습 목표 확인\n3. 모둠 활동\n4. 발표 및 정리';
+  // [명언, 말한 사람, 분류(인생·교육)]
   const QUOTES = [
-    ['천 리 길도 한 걸음부터.', '속담'],
-    ['배우고 때때로 익히면 또한 기쁘지 아니한가.', '공자'],
-    ['실패는 성공의 어머니이다.', '토머스 에디슨'],
-    ['오늘 걷지 않으면 내일은 뛰어야 한다.', '속담'],
-    ['할 수 있다고 믿는 사람은 결국 해낸다.', '샤를 드골'],
-    ['작은 기회로부터 종종 위대한 업적이 시작된다.', '데모스테네스'],
-    ['나는 천천히 가는 사람이지만, 절대 뒤로 가지는 않는다.', '에이브러햄 링컨'],
-    ['상상력은 지식보다 중요하다.', '알베르트 아인슈타인'],
-    ['행복은 습관이다. 그것을 몸에 지니라.', '허버드'],
-    ['친절한 말은 짧고 말하기 쉽지만, 그 울림은 끝이 없다.', '마더 테레사'],
-    ['꿈을 꿀 수 있다면, 그 꿈을 이룰 수도 있다.', '월트 디즈니'],
-    ['가장 큰 영광은 한 번도 실패하지 않는 것이 아니라, 넘어질 때마다 일어서는 데 있다.', '공자'],
-    ['읽는 것은 쉽고, 생각하는 것은 어렵고, 행동하는 것은 더 어렵다.', '괴테'],
-    ['남을 행복하게 하는 것이 나를 행복하게 하는 길이다.', '플라톤'],
-    ['시작이 반이다.', '아리스토텔레스'],
-    ['노력은 배신하지 않는다.', '격언'],
-    ['오늘의 나는 어제의 나보다 조금 더 나아지면 된다.', '격언'],
-    ['질문하는 사람은 잠시 바보가 되지만, 질문하지 않는 사람은 영원히 바보로 남는다.', '중국 속담'],
-    ['혼자 가면 빨리 가고, 함께 가면 멀리 간다.', '아프리카 속담'],
-    ['웃음은 두 사람 사이의 가장 가까운 거리이다.', '빅터 보르게'],
-    ['배움에는 끝이 없다.', '격언'],
-    ['낙숫물이 댓돌을 뚫는다.', '속담'],
-    ['위대한 일은 작은 일들이 모여 이루어진다.', '빈센트 반 고흐'],
-    ['자신을 믿어라. 당신은 생각보다 더 많은 것을 알고 있다.', '벤저민 스포크'],
-    ['아는 것을 안다고 하고, 모르는 것을 모른다고 하는 것이 참으로 아는 것이다.', '공자'],
-    ['내일은 내일의 태양이 뜬다.', '마거릿 미첼'],
-    ['고운 말은 고운 마음에서 나온다.', '격언'],
-    ['비가 온 뒤에 땅이 굳어진다.', '속담'],
-    ['재능은 노력하는 사람을 이길 수 없다.', '격언'],
-    ['교육은 세상을 바꿀 수 있는 가장 강력한 무기이다.', '넬슨 만델라'],
+    ['천 리 길도 한 걸음부터.', '속담', '인생'],
+    ['배우고 때때로 익히면 또한 기쁘지 아니한가.', '공자', '교육'],
+    ['실패는 성공의 어머니이다.', '토머스 에디슨', '인생'],
+    ['오늘 걷지 않으면 내일은 뛰어야 한다.', '속담', '인생'],
+    ['할 수 있다고 믿는 사람은 결국 해낸다.', '샤를 드골', '인생'],
+    ['작은 기회로부터 종종 위대한 업적이 시작된다.', '데모스테네스', '인생'],
+    ['나는 천천히 가는 사람이지만, 절대 뒤로 가지는 않는다.', '에이브러햄 링컨', '인생'],
+    ['상상력은 지식보다 중요하다.', '알베르트 아인슈타인', '교육'],
+    ['행복은 습관이다. 그것을 몸에 지니라.', '허버드', '인생'],
+    ['친절한 말은 짧고 말하기 쉽지만, 그 울림은 끝이 없다.', '마더 테레사', '인생'],
+    ['꿈을 꿀 수 있다면, 그 꿈을 이룰 수도 있다.', '월트 디즈니', '인생'],
+    ['가장 큰 영광은 한 번도 실패하지 않는 것이 아니라, 넘어질 때마다 일어서는 데 있다.', '공자', '인생'],
+    ['읽는 것은 쉽고, 생각하는 것은 어렵고, 행동하는 것은 더 어렵다.', '괴테', '교육'],
+    ['남을 행복하게 하는 것이 나를 행복하게 하는 길이다.', '플라톤', '인생'],
+    ['시작이 반이다.', '아리스토텔레스', '인생'],
+    ['노력은 배신하지 않는다.', '격언', '인생'],
+    ['오늘의 나는 어제의 나보다 조금 더 나아지면 된다.', '격언', '인생'],
+    ['질문하는 사람은 잠시 바보가 되지만, 질문하지 않는 사람은 영원히 바보로 남는다.', '중국 속담', '교육'],
+    ['혼자 가면 빨리 가고, 함께 가면 멀리 간다.', '아프리카 속담', '인생'],
+    ['웃음은 두 사람 사이의 가장 가까운 거리이다.', '빅터 보르게', '인생'],
+    ['배움에는 끝이 없다.', '격언', '교육'],
+    ['낙숫물이 댓돌을 뚫는다.', '속담', '인생'],
+    ['위대한 일은 작은 일들이 모여 이루어진다.', '빈센트 반 고흐', '인생'],
+    ['자신을 믿어라. 당신은 생각보다 더 많은 것을 알고 있다.', '벤저민 스포크', '인생'],
+    ['아는 것을 안다고 하고, 모르는 것을 모른다고 하는 것이 참으로 아는 것이다.', '공자', '교육'],
+    ['내일은 내일의 태양이 뜬다.', '마거릿 미첼', '인생'],
+    ['고운 말은 고운 마음에서 나온다.', '격언', '인생'],
+    ['비가 온 뒤에 땅이 굳어진다.', '속담', '인생'],
+    ['재능은 노력하는 사람을 이길 수 없다.', '격언', '인생'],
+    ['교육은 세상을 바꿀 수 있는 가장 강력한 무기이다.', '넬슨 만델라', '교육'],
+    ['배움의 좋은 점은 아무도 그것을 빼앗아 갈 수 없다는 것이다.', 'B.B. 킹', '교육'],
+    ['내일 죽을 것처럼 살고, 영원히 살 것처럼 배워라.', '마하트마 간디', '교육'],
+    ['교육의 뿌리는 쓰지만 그 열매는 달다.', '아리스토텔레스', '교육'],
+    ['배우기만 하고 생각하지 않으면 얻는 것이 없다.', '공자', '교육'],
+    ['세 사람이 길을 가면 그 가운데 반드시 나의 스승이 있다.', '공자', '교육'],
   ];
 
   const readJSON = (k, d) => { try { const v = store.get(k, null); return v === null ? d : JSON.parse(v); } catch (e) { return d; } };
@@ -957,10 +1107,54 @@
     return o && o.day === dayKeyOf(d) ? o : null;
   };
 
+  /* 오늘의 활동 = 체크리스트. 한 줄이 한 항목, 체크 안 한 첫 항목이 "지금 하는 중" */
+  let currentActivity = '';
+  function renderActivity(text) {
+    currentActivity = text;
+    if (actEl.isContentEditable) return;
+    const lines = text.split(/\n/).map((l) => l.trim()).filter(Boolean);
+    const today = dayKeyOf(new Date());
+    // 체크는 항목 글자로 기억 → 중간에 항목을 추가·수정해도 이미 체크한 것은 유지. 날짜가 바뀌면 새로 시작
+    let st = readJSON('actChecks', null);
+    if (!st || st.day !== today || !Array.isArray(st.done) || st.done.some((x) => typeof x !== 'string')) st = { day: today, done: [] };
+    st.done = st.done.filter((x) => lines.indexOf(x) >= 0);
+    writeJSON('actChecks', st);
+    actEl.innerHTML = '';
+    const nowIdx = lines.findIndex((l) => st.done.indexOf(l) < 0);
+    lines.forEach((line, i) => {
+      const done = st.done.indexOf(line) >= 0;
+      const item = document.createElement('div');
+      item.className = 'act-item' + (done ? ' done' : '') + (i === nowIdx ? ' now' : '');
+      item.setAttribute('role', 'checkbox');
+      item.setAttribute('aria-checked', String(done));
+      const box = document.createElement('span');
+      box.className = 'act-box';
+      const label = document.createElement('span');
+      label.className = 'act-text';
+      label.textContent = line.replace(/^(\d+\s*[.)]|[-*•·□☐☑✓✔])\s*/, ''); // "1." 같은 앞 번호는 체크박스로 대신
+      item.append(box, label);
+      item.addEventListener('click', () => {
+        const k = st.done.indexOf(line);
+        if (k >= 0) st.done.splice(k, 1); else st.done.push(line);
+        writeJSON('actChecks', st);
+        if (k < 0) blip(true);
+        renderActivity(text);
+      });
+      actEl.appendChild(item);
+    });
+    if (lines.length && nowIdx < 0) {
+      const end = document.createElement('div');
+      end.className = 'act-all-done';
+      end.textContent = '🎉 오늘 활동을 모두 마쳤어요!';
+      actEl.appendChild(end);
+    }
+    $('actProgress').textContent = lines.length ? `${st.done.length}/${lines.length} 완료` : '';
+  }
+
   let quote = { text: '', by: '' };
   function renderTexts(d = new Date()) {
     let o = todayOverride('activity', d), s = !o && fromSheet('activity', d);
-    actEl.textContent = o ? o.text : s ? s.row.activity : store.get('activity', DEFAULT_ACTIVITY);
+    renderActivity(o ? o.text : s ? s.row.activity : store.get('activity', DEFAULT_ACTIVITY));
     $('actNote').textContent = s ? s.note : '';
 
     o = todayOverride('question', d); s = !o && fromSheet('question', d);
@@ -968,9 +1162,10 @@
     $('qNote').textContent = s ? s.note : '';
 
     o = todayOverride('quote', d); s = !o && fromSheet('quote', d);
-    if (o) quote = { text: o.text, by: o.by || '' };
-    else if (s) quote = { text: s.row.quote, by: s.row.by || '' };
-    else { const q = QUOTES[dayNoOf(d) % QUOTES.length]; quote = { text: q[0], by: q[1] }; }
+    if (o) quote = { text: o.text, by: o.by || '', cat: o.cat || '' };
+    else if (s) quote = { text: s.row.quote, by: s.row.by || '', cat: '' };
+    else { const q = QUOTES[(dayNoOf(d) * 7) % QUOTES.length]; quote = { text: q[0], by: q[1], cat: q[2] }; }
+    $('quCat').textContent = quote.cat ? '· ' + quote.cat : '';
     $('quText').textContent = '“' + quote.text.trim() + '”';
     $('quBy').textContent = quote.by ? '— ' + quote.by : '';
     $('quNote').textContent = s ? s.note : '';
@@ -980,15 +1175,16 @@
     const el = $(btn.dataset.target);
     const kind = el.dataset.kind;
     const finish = () => {
+      const text = el.innerText.trim(); // 편집 상태(줄바꿈 유지)일 때 먼저 읽기
       el.contentEditable = 'false';
       btn.textContent = '✏️ 편집';
-      const text = el.innerText.trim();
       writeJSON('override:' + kind, { day: dayKeyOf(new Date()), text });
       if (kind === 'activity') store.set('activity', text); // 시트가 없을 때 다음 날에도 이어서 사용
       renderTexts();
     };
     btn.addEventListener('click', () => {
       if (el.isContentEditable) { finish(); return; }
+      if (kind === 'activity') el.textContent = currentActivity; // 한 줄에 한 활동씩
       el.contentEditable = 'true';
       btn.textContent = '✅ 완료';
       el.focus();
@@ -1020,8 +1216,30 @@
     const list = mine.length ? mine : QUOTES;
     const pool = list.filter((q) => q[0] !== quote.text);
     const q = pool.length ? pool[rand(pool.length)] : list[0];
-    writeJSON('override:quote', { day: dayKeyOf(new Date()), text: q[0], by: q[1] });
+    writeJSON('override:quote', { day: dayKeyOf(new Date()), text: q[0], by: q[1], cat: q[2] || '' });
     renderTexts();
+  });
+
+  /* ================= 제목: ○○○ 선생님과 함께하는 즐거운 ○○ 수업 ================= */
+  document.querySelectorAll('.title-edit').forEach((el) => {
+    const show = () => { el.textContent = store.get(el.dataset.key, '') || el.dataset.ph; };
+    const finish = () => {
+      if (!el.isContentEditable) return;
+      el.contentEditable = 'false';
+      store.set(el.dataset.key, el.textContent.replace(/\s+/g, ' ').trim());
+      show();
+    };
+    el.addEventListener('click', () => {
+      if (el.isContentEditable) return;
+      if (!store.get(el.dataset.key, '')) el.textContent = '';
+      el.contentEditable = 'true';
+      el.focus();
+      const sel = getSelection();
+      sel.selectAllChildren(el);
+    });
+    el.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === 'Escape') { e.preventDefault(); el.blur(); } });
+    el.addEventListener('blur', finish);
+    show();
   });
 
   /* ================= 구글 시트 연결 ================= */
@@ -1143,7 +1361,13 @@
     renderTexts();
     showSheetStatus('연결을 끊었어요. 이제 기본 질문과 명언이 나와요.');
   });
-  window.ibwCloseOverlay = () => { if (settings.hidden) return false; closeSettings(); return true; };
+  // 뒤로가기·Esc: 열려 있는 창(미리 쓰기, 정보)을 먼저 닫음
+  window.ibwCloseOverlay = () => {
+    const open = document.querySelector('.overlay:not([hidden])');
+    if (!open) return false;
+    open.hidden = true;
+    return true;
+  };
 
   // 앱을 켤 때, 30분마다, 날짜가 바뀔 때 시트를 새로 불러옴
   if (sheet && sheet.url) loadSheet(sheet.url);
