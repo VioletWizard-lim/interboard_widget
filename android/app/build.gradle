@@ -1,0 +1,30 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.interboard.widget'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId 'com.interboard.widget'
+        minSdk 21
+        targetSdk 34
+        versionCode 1
+        versionName '1.0'
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+}
+
+// 저장소 맨 위의 index.html 을 그대로 앱에 넣는다 (웹/앱이 같은 파일을 사용)
+def webAssetsDir = layout.buildDirectory.dir('generated/webAssets').get().asFile
+def copyWebAssets = tasks.register('copyWebAssets', Copy) {
+    from(rootProject.file('../index.html'))
+    into(webAssetsDir)
+}
+android.sourceSets.main.assets.srcDir(webAssetsDir)
+tasks.named('preBuild') { dependsOn copyWebAssets }

@@ -57,6 +57,7 @@
     gap: var(--gap);
   }
   .card {
+    --u: 1cqmin; /* 위젯 크기 기준 단위 (구형 WebView는 JS가 px로 대신 계산) */
     --accent: var(--yellow);
     position: relative;
     background: var(--card);
@@ -64,7 +65,7 @@
     border-top: 6px solid var(--accent);
     border-radius: var(--radius);
     box-shadow: 0 6px 18px rgba(0, 0, 0, .25);
-    padding: 3.5cqmin 4cqmin;
+    padding: calc(3.5 * var(--u)) calc(4 * var(--u));
     container-type: size;
     display: flex;
     flex-direction: column;
@@ -75,7 +76,7 @@
   }
   .card > .label {
     margin: 0;
-    font-size: clamp(15px, 7cqmin, 64px);
+    font-size: clamp(15px, calc(7 * var(--u)), 64px);
     font-weight: 800;
     color: var(--accent);
     display: flex;
@@ -90,12 +91,12 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 3cqmin;
+    gap: calc(3 * var(--u));
     text-align: center;
   }
   .card.expanded {
     position: fixed;
-    inset: 14px 14px 78px 14px;
+    top: 14px; right: 14px; bottom: 78px; left: 14px;
     z-index: 50;
     cursor: zoom-out;
     box-shadow: 0 20px 80px rgba(0, 0, 0, .6);
@@ -103,10 +104,10 @@
   body.has-expanded main .card:not(.expanded) { visibility: hidden; }
 
   /* ---------- 공통 버튼 ---------- */
-  .row { display: flex; gap: 1.6cqmin; flex-wrap: wrap; justify-content: center; align-items: center; }
+  .row { display: flex; gap: calc(1.6 * var(--u)); flex-wrap: wrap; justify-content: center; align-items: center; }
   button, .chip {
     font-family: inherit;
-    font-size: clamp(14px, 4.6cqmin, 40px);
+    font-size: clamp(14px, calc(4.6 * var(--u)), 40px);
     font-weight: 700;
     color: var(--chalk);
     background: rgba(255, 255, 255, .10);
@@ -121,13 +122,13 @@
   button.primary { background: var(--accent); color: #1d2b25; border-color: transparent; }
   button.on { background: var(--accent); color: #1d2b25; }
   button:disabled { opacity: .4; cursor: default; }
-  .small { font-size: clamp(12px, 3.6cqmin, 30px); }
+  .small { font-size: clamp(12px, calc(3.6 * var(--u)), 30px); }
   .muted { color: var(--chalk-dim); }
 
   /* ---------- 집중벨 ---------- */
   #bell { --accent: var(--yellow); }
   .bell-btn {
-    font-size: 30cqmin;
+    font-size: calc(30 * var(--u));
     line-height: 1;
     background: none;
     border: none;
@@ -140,19 +141,19 @@
     15% { transform: rotate(18deg); } 30% { transform: rotate(-16deg); }
     45% { transform: rotate(12deg); } 60% { transform: rotate(-8deg); } 75% { transform: rotate(4deg); }
   }
-  .bell-msg { font-size: 10cqmin; font-weight: 900; color: var(--yellow); min-height: 1.2em; }
+  .bell-msg { font-size: calc(10 * var(--u)); font-weight: 900; color: var(--yellow); min-height: 1.2em; }
 
   /* ---------- 타이머 ---------- */
   #timer { --accent: var(--orange); }
   .t-display {
-    font-size: 26cqmin;
+    font-size: calc(26 * var(--u));
     font-weight: 900;
     font-variant-numeric: tabular-nums;
     line-height: 1;
     letter-spacing: -.02em;
   }
   .t-display.warn { color: var(--red); }
-  .t-bar { width: 80%; height: 2.4cqmin; min-height: 6px; background: rgba(255, 255, 255, .12); border-radius: 99px; overflow: hidden; }
+  .t-bar { width: 80%; height: calc(2.4 * var(--u)); min-height: 6px; background: rgba(255, 255, 255, .12); border-radius: 99px; overflow: hidden; }
   .t-bar > div { height: 100%; width: 100%; background: var(--accent); transition: width .25s linear; }
   .done { animation: flash .5s ease-in-out 6; }
   @keyframes flash { 50% { background: #7a2f2f; } }
@@ -161,7 +162,7 @@
   #number { --accent: var(--sky); }
   #group { --accent: var(--pink); }
   .pick {
-    font-size: 30cqmin;
+    font-size: calc(30 * var(--u));
     font-weight: 900;
     line-height: 1;
     font-variant-numeric: tabular-nums;
@@ -170,12 +171,12 @@
   .pick.landed { animation: pop .35s ease-out; }
   @keyframes pop { 0% { transform: scale(.6); } 70% { transform: scale(1.12); } 100% { transform: scale(1); } }
   .pick small { font-size: .38em; margin-left: .05em; }
-  .stepper { display: flex; align-items: center; gap: 1.2cqmin; font-size: clamp(13px, 4.2cqmin, 36px); }
+  .stepper { display: flex; align-items: center; gap: calc(1.2 * var(--u)); font-size: clamp(13px, calc(4.2 * var(--u)), 36px); }
   .stepper button { padding: .1em .6em; }
   .stepper b { min-width: 2.2em; display: inline-block; }
-  .history { display: flex; flex-wrap: wrap; gap: .8cqmin; justify-content: center; max-width: 95%; max-height: 18cqh; overflow: auto; }
+  .history { display: flex; flex-wrap: wrap; gap: calc(.8 * var(--u)); justify-content: center; max-width: 95%; max-height: calc(18 * var(--u)); overflow: auto; }
   .history span {
-    font-size: clamp(11px, 3.4cqmin, 28px);
+    font-size: clamp(11px, calc(3.4 * var(--u)), 28px);
     padding: .1em .5em;
     border-radius: 99px;
     background: rgba(255, 255, 255, .12);
@@ -184,19 +185,19 @@
   /* ---------- 날짜 / 시간 ---------- */
   #date { --accent: var(--mint); }
   #time { --accent: var(--violet); }
-  .big-date { font-size: 20cqmin; font-weight: 900; line-height: 1; }
-  .big-day { font-size: 11cqmin; font-weight: 800; color: var(--mint); }
-  .sub { font-size: 6cqmin; color: var(--chalk-dim); }
-  .big-time { font-size: 24cqmin; font-weight: 900; line-height: 1; font-variant-numeric: tabular-nums; }
+  .big-date { font-size: calc(20 * var(--u)); font-weight: 900; line-height: 1; }
+  .big-day { font-size: calc(11 * var(--u)); font-weight: 800; color: var(--mint); }
+  .sub { font-size: calc(6 * var(--u)); color: var(--chalk-dim); }
+  .big-time { font-size: calc(24 * var(--u)); font-weight: 900; line-height: 1; font-variant-numeric: tabular-nums; }
   .big-time .sec { font-size: .45em; color: var(--chalk-dim); }
-  .ampm { font-size: 8cqmin; font-weight: 800; color: var(--violet); }
+  .ampm { font-size: calc(8 * var(--u)); font-weight: 800; color: var(--violet); }
 
   /* ---------- 활동 / 질문 / 명언 ---------- */
   #activity { --accent: var(--orange); }
   #question { --accent: var(--sky); }
   #quote { --accent: var(--yellow); }
   .text {
-    font-size: 9cqmin;
+    font-size: calc(9 * var(--u));
     font-weight: 800;
     line-height: 1.35;
     white-space: pre-wrap;
@@ -215,10 +216,10 @@
     cursor: text;
     user-select: text;
   }
-  .quote-text { font-size: 7.5cqmin; }
-  .quote-by { font-size: 5cqmin; color: var(--chalk-dim); font-weight: 700; }
-  .corner { position: absolute; top: 3cqmin; right: 3cqmin; display: flex; gap: 1cqmin; }
-  .corner button { font-size: clamp(12px, 3.6cqmin, 28px); padding: .25em .7em; }
+  .quote-text { font-size: calc(7.5 * var(--u)); }
+  .quote-by { font-size: calc(5 * var(--u)); color: var(--chalk-dim); font-weight: 700; }
+  .corner { position: absolute; top: calc(3 * var(--u)); right: calc(3 * var(--u)); display: flex; gap: calc(1 * var(--u)); }
+  .corner button { font-size: clamp(12px, calc(3.6 * var(--u)), 28px); padding: .25em .7em; }
 
   /* ---------- 오른쪽 아래 현재 시간 ---------- */
   footer {
@@ -399,8 +400,8 @@
 (() => {
   const $ = (id) => document.getElementById(id);
   const store = {
-    get(k, d) { try { const v = localStorage.getItem('ibw:' + k); return v === null ? d : v; } catch { return d; } },
-    set(k, v) { try { localStorage.setItem('ibw:' + k, v); } catch {} },
+    get(k, d) { try { const v = localStorage.getItem('ibw:' + k); return v === null ? d : v; } catch (e) { return d; } },
+    set(k, v) { try { localStorage.setItem('ibw:' + k, v); } catch (e) {} },
   };
   const rand = (n) => Math.floor(Math.random() * n);
 
@@ -426,9 +427,31 @@
     if (e.key === 'Escape' && open && !document.activeElement.isContentEditable) toggleCard(open);
   });
 
+  // 안드로이드 앱: 뒤로가기 버튼이 확대된 위젯을 먼저 닫음 (닫았으면 true)
+  window.ibwBack = () => {
+    const open = document.querySelector('.card.expanded');
+    if (!open) return false;
+    if (document.activeElement && document.activeElement.isContentEditable) document.activeElement.blur();
+    toggleCard(open);
+    return true;
+  };
+  // 앱 안에서는 이미 전체화면이라 버튼이 필요 없음
+  if (/InterboardWidgetApp/.test(navigator.userAgent)) $('fsBtn').style.display = 'none';
+
+  // 컨테이너 단위(cqmin)를 모르는 구형 WebView: 위젯마다 기준 단위를 px로 계산
+  if (!(window.CSS && CSS.supports && CSS.supports('width', '1cqmin'))) {
+    const fit = () => document.querySelectorAll('.card').forEach((c) => {
+      c.style.setProperty('--u', Math.min(c.clientWidth, c.clientHeight) / 100 + 'px');
+    });
+    fit();
+    window.addEventListener('resize', fit);
+    if (window.ResizeObserver) document.querySelectorAll('.card').forEach((c) => new ResizeObserver(fit).observe(c));
+    else document.addEventListener('click', () => setTimeout(fit, 0));
+  }
+
   $('fsBtn').addEventListener('click', () => {
     if (document.fullscreenElement) document.exitFullscreen();
-    else document.documentElement.requestFullscreen?.().catch(() => {});
+    else document.documentElement.requestFullscreen && document.documentElement.requestFullscreen().catch(() => {});
   });
 
   /* ================= 소리 (종소리 합성) ================= */
@@ -455,7 +478,7 @@
       ac = ac || new (window.AudioContext || window.webkitAudioContext)();
       if (ac.state === 'suspended') ac.resume();
       for (let i = 0; i < times; i++) strike(ac.currentTime + 0.05 + i * 0.75);
-    } catch {}
+    } catch (e) {}
   }
 
   /* ================= 1. 집중벨 ================= */
@@ -525,7 +548,7 @@
     if (remain <= 0) { remain = total; timerCard.classList.remove('done'); }
     if (remain <= 0) return;
     // 소리 재생 권한을 미리 얻어 두기 (브라우저 자동재생 정책)
-    try { ac = ac || new (window.AudioContext || window.webkitAudioContext)(); ac.resume(); } catch {}
+    try { ac = ac || new (window.AudioContext || window.webkitAudioContext)(); ac.resume(); } catch (e) {}
     running = true;
     endAt = Date.now() + remain * 1000;
     tickId = setInterval(tick, 200);
