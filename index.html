@@ -672,13 +672,13 @@
     <h2 id="prefsTitle">⚙️ 설정</h2>
     <h3>화면 스타일</h3>
     <div class="theme-choices">
-      <button class="theme-opt" data-theme-opt="classic">
-        <span class="swatch"><i style="background:#ffd54a"></i><i style="background:#ff9e57"></i><i style="background:#7cc8ff"></i><i style="background:#ff8fb1"></i><i style="background:#b9a2ff"></i></span>
-        <b>알록달록</b><span class="muted">위젯마다 색이 달라요 (기본)</span>
-      </button>
       <button class="theme-opt" data-theme-opt="clean">
         <span class="swatch"><i style="background:#8fd6c4"></i><i style="background:#8fd6c4"></i><i style="background:#8fd6c4"></i><i style="background:#8fd6c4"></i><i style="background:#8fd6c4"></i></span>
-        <b>깔끔하게</b><span class="muted">색을 한 가지로 통일해요</span>
+        <b>깔끔하게</b><span class="muted">색을 한 가지로 통일해요 (기본)</span>
+      </button>
+      <button class="theme-opt" data-theme-opt="classic">
+        <span class="swatch"><i style="background:#ffd54a"></i><i style="background:#ff9e57"></i><i style="background:#7cc8ff"></i><i style="background:#ff8fb1"></i><i style="background:#b9a2ff"></i></span>
+        <b>알록달록</b><span class="muted">위젯마다 색이 달라요</span>
       </button>
     </div>
     <h3>그 밖의 메뉴</h3>
@@ -700,6 +700,7 @@
     </table>
     <h3>업데이트 기록</h3>
     <ul class="changelog">
+      <li><b>2.3</b> 처음 켜면 깔끔한 화면이 기본</li>
       <li><b>2.2</b> 설정 메뉴와 화면 스타일(알록달록 / 깔끔하게), 아래 줄 부수기능을 아이콘으로 단순화, 명언 빼기</li>
       <li><b>2.1</b> 선생님 이름·과목도 구글 시트에서 미리 입력</li>
       <li><b>2.0</b> 새 화면 배치(질문·타이머 / 활동·점수판 / 작은 위젯 줄), 오늘의 활동 체크리스트와 "지금 하는 중" 표시, 선생님 이름·과목 제목, 인생·교육 명언, 버전 정보</li>
@@ -758,7 +759,7 @@
   const rand = (n) => Math.floor(Math.random() * n);
 
   // 버전: 기능을 바꿀 때마다 APP_VERSION 을 올림. 앱(APK)으로 만들 때는 빌드 번호가 자동으로 붙음
-  const APP_VERSION = '2.2';
+  const APP_VERSION = '2.3';
   const BUILD = '@@BUILD@@';
   const verText = 'Ver ' + APP_VERSION + (/^\d+$/.test(BUILD) ? ` (빌드 ${BUILD})` : '');
   $('appVer').textContent = verText;
@@ -1243,7 +1244,7 @@
     document.body.classList.toggle('theme-clean', t === 'clean');
     document.querySelectorAll('.theme-opt').forEach((b) => b.classList.toggle('on', b.dataset.themeOpt === t));
   }
-  applyTheme(store.get('theme', 'classic'));
+  applyTheme(store.get('theme', 'clean')); // 기본은 깔끔하게
   document.querySelectorAll('.theme-opt').forEach((b) => b.addEventListener('click', () => {
     store.set('theme', b.dataset.themeOpt);
     applyTheme(b.dataset.themeOpt);
