@@ -1088,7 +1088,7 @@
     }
   }
 
-  /* ================= 7·8·9. 오늘의 활동 / 질문 / 명언 ================= */
+  /* ================= 오늘의 활동 / 질문 ================= */
   const QUESTIONS = [
     '요즘 나를 가장 웃게 만드는 것은 무엇인가요?',
     '내가 초능력을 하나 가질 수 있다면 무엇을 고를까요?',
@@ -1366,7 +1366,7 @@
         const first = (k) => (sheet.rows.find((r) => r[k]) || {})[k];
         const who = [first('name') && `선생님 ${first('name')}`, first('subject') && `과목 ${first('subject')}`].filter(Boolean).join(', ');
         msg = `✅ 연결됨 · ${fmtTime(sheet.fetchedAt)}에 불러옴 · ${who ? who + ' · ' : ''}활동 ${count('activity')}개, 질문 ${count('question')}개`;
-      } else msg = '아직 연결된 시트가 없어요. 연결하기 전에는 기본 질문과 명언이 나와요.';
+      } else msg = '아직 연결된 시트가 없어요. 연결하기 전에는 기본 질문이 나와요.';
     }
     el.textContent = msg;
     el.classList.toggle('bad', !!bad);
@@ -1413,7 +1413,7 @@
     store.set('sheet', 'null');
     $('sheetUrl').value = '';
     renderTexts();
-    showSheetStatus('연결을 끊었어요. 이제 기본 질문과 명언이 나와요.');
+    showSheetStatus('연결을 끊었어요. 이제 기본 질문이 나와요.');
   });
   // 뒤로가기·Esc: 열려 있는 창(미리 쓰기, 정보)을 먼저 닫음
   window.ibwCloseOverlay = () => {
