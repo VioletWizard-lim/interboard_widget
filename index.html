@@ -40,16 +40,8 @@
     gap: 16px;
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: flex-end;
     padding: 0 20px;
-  }
-  .class-title { margin: 0; font-size: clamp(18px, 2.2vw, 40px); font-weight: 800; letter-spacing: -.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .title-edit {
-    color: var(--yellow);
-    border-bottom: 3px dashed rgba(255, 213, 74, .55);
-    padding: 0 .15em;
-    cursor: text;
-    outline: none;
   }
   header .ver { font-size: 14px; color: var(--chalk-dim); font-variant-numeric: tabular-nums; white-space: nowrap; }
   .panel h3 { margin: 16px 0 8px; font-size: 19px; }
@@ -75,31 +67,29 @@
   .about-table td { padding: 6px 0; font-weight: 800; }
   .changelog { margin: 6px 0 14px; padding-left: 1.2em; font-size: 16px; }
   .changelog b { color: var(--accent); }
-  .title-edit[contenteditable="true"] { background: rgba(0, 0, 0, .3); border-bottom-style: solid; user-select: text; }
   header button { font-size: 15px; padding: .35em 1em; }
   header .row { gap: 8px; }
 
   /* ---------- 위젯 격자 ---------- */
-  /* 스케치 배치: 질문|타이머 / 활동|점수판 / 아이콘 줄 */
+  /* 배치: 배울 내용·타이머 | 오늘의 활동 / 아래 아이콘 줄 */
   main {
     height: calc(100% - 64px);
     padding: 0 var(--gap) var(--gap);
     display: grid;
-    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
-    grid-template-rows: minmax(0, 1fr) minmax(0, 3.6fr) minmax(0, .55fr);
-    grid-template-areas: "question timer" "activity score" "bottom bottom";
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+    grid-template-rows: minmax(0, 1fr) minmax(0, 1.3fr) minmax(0, .32fr);
+    grid-template-areas: "question activity" "timer activity" "bottom bottom";
     gap: var(--gap);
   }
   #question { grid-area: question; }
   #timer { grid-area: timer; }
   #activity { grid-area: activity; }
-  #score { grid-area: score; }
   .bottom {
     grid-area: bottom;
     border-top: 1px solid var(--card-edge);
     min-height: 0;
     display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(6, minmax(0, 1fr));
     gap: var(--gap);
   }
   /* 작게 있을 때는 핵심만, 크게 펼치면 세부 설정까지 */
@@ -237,7 +227,7 @@
   .dt-time { display: flex; align-items: baseline; justify-content: center; gap: calc(3 * var(--u)); }
   .big-date { font-size: calc(14 * var(--u)); font-weight: 900; line-height: 1.1; }
   .big-day { font-size: calc(14 * var(--u)); font-weight: 900; line-height: 1.1; color: var(--mint); }
-  .sub { font-size: calc(6 * var(--u)); color: var(--chalk-dim); font-weight: 700; flex-basis: 100%; text-align: center; }
+  .sub { font-size: calc(6 * var(--u)); color: var(--chalk-dim); font-weight: 700; text-align: center; }
   .big-time { font-size: calc(24 * var(--u)); font-weight: 900; line-height: 1; font-variant-numeric: tabular-nums; }
   .big-time .sec { font-size: .45em; color: var(--chalk-dim); }
   .ampm { font-size: calc(8 * var(--u)); font-weight: 800; color: var(--violet); }
@@ -289,7 +279,7 @@
   }
   #sReset.confirm { background: var(--red); color: #fff; border-color: transparent; }
 
-  /* ---------- 활동 / 질문 ---------- */
+  /* ---------- 활동 / 배울 내용 ---------- */
   #activity { --accent: var(--orange); }
   #question { --accent: var(--sky); }
   .text {
@@ -317,6 +307,7 @@
 
   .plan-note { font-size: clamp(11px, calc(3.2 * var(--u)), 24px); color: var(--chalk-dim); font-weight: 700; }
   .plan-note:empty { display: none; }
+  .text.placeholder { color: var(--chalk-dim); font-weight: 600; font-size: clamp(16px, calc(8 * var(--u)), 34px) !important; }
 
   /* ---------- 구글 시트로 미리 쓰기 ---------- */
   [hidden] { display: none !important; }
@@ -390,7 +381,7 @@
     justify-content: center;
     min-width: 0;
   }
-  .tile:not(.expanded) > .label, .tile:not(.expanded) > .body { display: none; }
+  .tile:not(.expanded) > .label, .tile:not(.expanded) > .body, .tile:not(.expanded) > .corner { display: none; }
   .tile.expanded > .mini { display: none; }
   .mini {
     display: flex;
@@ -411,25 +402,16 @@
   .ring .mini-ico { display: inline-block; animation: ring .9s ease-in-out 2; }
   .big-date, .big-time { white-space: nowrap; }
 
-  /* ---------- 납작한 칸 (질문·타이머) ---------- */
+  /* ---------- 배울 내용·타이머 ---------- */
   .wide:not(.expanded) { padding: 14px 20px; }
-  .wide:not(.expanded) > .label { font-size: clamp(16px, calc(14 * var(--u)), 32px); }
-  #question:not(.expanded) .text { font-size: clamp(20px, calc(24 * var(--u)), 60px); }
-  #timer:not(.expanded) .body {
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr);
-    grid-template-areas: "disp presets" "disp ctrl" "bar bar";
-    column-gap: calc(8 * var(--u));
-    row-gap: calc(3 * var(--u));
-    align-content: center;
-    justify-items: center;
-  }
-  #timer:not(.expanded) .t-display { grid-area: disp; font-size: calc(72 * var(--u)); }
-  #timer:not(.expanded) .t-presets { grid-area: presets; }
-  #timer:not(.expanded) .t-ctrl { grid-area: ctrl; }
-  #timer:not(.expanded) .t-bar { grid-area: bar; width: 100%; }
+  .wide:not(.expanded) > .label { font-size: clamp(16px, calc(9 * var(--u)), 34px); }
+  .wide:not(.expanded) .corner button { font-size: clamp(14px, calc(6 * var(--u)), 26px); }
+  #question:not(.expanded) .text { font-size: clamp(20px, calc(13 * var(--u)), 58px); }
+  #timer:not(.expanded) .body { gap: calc(4 * var(--u)); }
+  #timer:not(.expanded) .t-display { font-size: calc(30 * var(--u)); }
   #timer:not(.expanded) .t-adj { display: none; }
-  #timer:not(.expanded) button { font-size: clamp(16px, calc(14 * var(--u)), 32px); }
+  #timer:not(.expanded) .t-bar { width: 90%; }
+  #timer:not(.expanded) button { font-size: clamp(16px, calc(6 * var(--u)), 32px); }
 
   /* ---------- 오늘의 활동 체크리스트 ---------- */
   .act-progress { font-size: .6em; color: var(--chalk-dim); font-weight: 700; margin-left: .3em; }
@@ -490,7 +472,6 @@
   .theme-clean .card { border-top: 1px solid var(--card-edge); }
   .theme-clean .tile:not(.expanded) { border: none; }
   .theme-clean .card > .label { color: var(--chalk); }
-  .theme-clean .title-edit { color: var(--one); border-bottom-color: rgba(143, 214, 196, .5); }
   .theme-clean .score-tile { --g: rgba(255, 255, 255, .22) !important; }
   .theme-clean .score-tile .s-name { color: var(--chalk-dim); }
   .theme-clean .score-tile.lead { background: var(--one-soft); border-color: var(--one); }
@@ -509,8 +490,7 @@
   @media (max-width: 760px) {
     body { overflow: auto; }
     header { height: auto; padding-block: 10px; flex-wrap: wrap; }
-    .class-title { white-space: normal; }
-    main { height: auto; grid-template-columns: 1fr; grid-template-rows: none; grid-template-areas: "activity" "timer" "score" "question" "bottom"; }
+    main { height: auto; grid-template-columns: 1fr; grid-template-rows: none; grid-template-areas: "question" "activity" "timer" "bottom"; }
     .card { height: 46vh; }
     .wide { height: 30vh; }
     .tile:not(.expanded) { height: auto; padding: 6px 0; }
@@ -520,12 +500,8 @@
 </head>
 <body>
 <header>
-  <h1 class="class-title">
-    <span class="title-edit" id="tName" data-kind="name" data-ph="OOO" role="textbox" title="눌러서 이름 바꾸기">OOO</span> 선생님과 함께하는 즐거운
-    <span class="title-edit" id="tSubj" data-kind="subject" data-ph="OO" role="textbox" title="눌러서 과목 바꾸기">OO</span> 수업
-  </h1>
   <div class="row">
-    <button id="planBtn" title="구글 시트에 미리 써 둔 활동·질문 불러오기">📋 미리 쓰기</button>
+    <button id="planBtn" title="구글 시트에 미리 써 둔 배울 내용·활동 불러오기">📋 미리 쓰기</button>
     <button id="prefsBtn" title="화면 스타일 등 설정">⚙️ 설정</button>
     <button id="fsBtn" class="small" title="브라우저 전체화면">⛶ 전체화면</button>
     <button class="ver" id="appVer" title="버전 · 만든 사람"></button>
@@ -533,13 +509,10 @@
 </header>
 
 <main>
-  <!-- 오늘의 질문 -->
+  <!-- 오늘 배울 내용 (학습목표·단원명·질문 등 선생님이 직접 씀) -->
   <section class="card wide" id="question" style="view-transition-name: question">
-    <h2 class="label">❓ 오늘의 질문</h2>
-    <div class="corner">
-      <button id="qNext">🎲 다른 질문</button>
-      <button class="edit-btn" data-target="qText">✏️ 편집</button>
-    </div>
+    <h2 class="label">🎯 오늘 배울 내용</h2>
+    <div class="corner"><button class="edit-btn" data-target="qText">✏️ 편집</button></div>
     <div class="body">
       <div class="text" id="qText" data-kind="question"></div>
       <div class="plan-note" id="qNote"></div>
@@ -582,25 +555,26 @@
     </div>
   </section>
 
-  <!-- 모둠 점수판 -->
-  <section class="card" id="score" style="view-transition-name: score">
-    <h2 class="label">🏆 모둠 점수판</h2>
-    <div class="corner"><button id="sReset">↺ 초기화</button></div>
-    <div class="body">
-      <div class="score-grid" id="sGrid"></div>
-    </div>
-  </section>
 
   <!-- 아래 줄: 부수기능 아이콘 -->
   <div class="bottom">
+    <section class="card tile" id="score" style="view-transition-name: score">
+      <div class="mini"><span class="mini-ico">🏆</span><span class="mini-txt" id="miniScore">모둠 점수</span></div>
+      <h2 class="label">🏆 모둠 점수판</h2>
+      <div class="corner"><button id="sReset">↺ 초기화</button></div>
+      <div class="body">
+        <div class="score-grid" id="sGrid"></div>
+      </div>
+    </section>
     <section class="card tile" id="bell" style="view-transition-name: bell">
-      <button class="mini" data-bell="1" aria-label="집중벨 울리기"><span class="mini-ico">🔔</span><span class="mini-txt">집중벨</span></button>
+      <button class="mini" data-bell="2" aria-label="집중벨 울리기"><span class="mini-ico">🔔</span><span class="mini-txt">집중벨</span></button>
       <h2 class="label">🔔 집중벨</h2>
       <div class="body">
-        <button class="bell-btn" data-bell="1" aria-label="집중벨 울리기">🔔</button>
+        <button class="bell-btn" data-bell="2" aria-label="집중벨 울리기">🔔</button>
         <div class="bell-msg x-only" id="bellMsg"></div>
         <div class="row x-only">
           <button data-bell="1">한 번</button>
+          <button data-bell="2">두 번</button>
           <button data-bell="3">세 번</button>
         </div>
       </div>
@@ -700,6 +674,7 @@
     </table>
     <h3>업데이트 기록</h3>
     <ul class="changelog">
+      <li><b>2.4</b> 배치 변경(배울 내용·타이머 | 오늘의 활동), "오늘의 질문"을 "오늘 배울 내용"으로, 모둠 점수판을 아래 아이콘으로, 제목 줄 삭제, 집중벨 기본 2번, 날짜 확대 화면 가운데 정렬</li>
       <li><b>2.3</b> 처음 켜면 깔끔한 화면이 기본</li>
       <li><b>2.2</b> 설정 메뉴와 화면 스타일(알록달록 / 깔끔하게), 아래 줄 부수기능을 아이콘으로 단순화, 명언 빼기</li>
       <li><b>2.1</b> 선생님 이름·과목도 구글 시트에서 미리 입력</li>
@@ -719,22 +694,22 @@
     <h2 id="settingsTitle">📋 구글 시트로 미리 쓰기</h2>
     <p>집이나 휴대폰에서 구글 시트에 적어 두면, 칠판이 인터넷으로 읽어 와서 그날 보여 줘요.</p>
     <ol>
-      <li>구글 시트를 새로 만들고 첫 줄에 <b>날짜 · 선생님 · 과목 · 활동 · 질문</b>을 적어요. 필요 없는 칸은 빼도 돼요.</li>
+      <li>구글 시트를 새로 만들고 첫 줄에 <b>날짜 · 배울 내용 · 활동</b>을 적어요. 필요 없는 칸은 빼도 돼요.</li>
       <li>둘째 줄부터 미리 써 둬요. <b>날짜를 적은 줄</b>은 그날 나오고, <b>날짜를 비운 줄</b>은 수업 날마다 위에서부터 하나씩 차례로 나와요. 칸 하나에 여러 줄을 쓰려면 <kbd>Alt</kbd>+<kbd>Enter</kbd>를 눌러요.</li>
       <li>시트 오른쪽 위 <b>공유</b> → 일반 액세스를 <b>링크가 있는 모든 사용자</b>로 바꾸고 <b>링크 복사</b>를 눌러요.</li>
       <li>아래 칸에 복사한 링크를 그대로 붙여 넣고 <b>연결하기</b>를 눌러요. 칠판마다 처음 한 번만 하면 돼요.<br><span class="muted">링크 대신 주소 가운데의 시트 ID(<code>/d/</code>와 <code>/edit</code> 사이 글자)만 넣어도 돼요.</span></li>
     </ol>
     <div class="sample-wrap">
       <table class="sample">
-        <thead><tr><th>날짜</th><th>선생님</th><th>과목</th><th>활동</th><th>질문</th></tr></thead>
+        <thead><tr><th>날짜</th><th>배울 내용</th><th>활동</th></tr></thead>
         <tbody>
-          <tr><td></td><td>김하늘</td><td>과학</td><td></td><td>오늘 기대되는 일은?</td></tr>
-          <tr><td>2026. 10. 7</td><td></td><td>창체</td><td>독서 10분<br>모둠 발표</td><td>가장 기억에 남는 책은?</td></tr>
-          <tr><td></td><td></td><td></td><td></td><td>나를 한 단어로 표현하면?</td></tr>
+          <tr><td>2026. 10. 6</td><td>2단원. 물질의 상태 변화를 설명할 수 있다</td><td>실험 영상 보기<br>모둠 실험<br>결과 발표</td></tr>
+          <tr><td>2026. 10. 7</td><td>얼음이 녹으면 무게는 어떻게 될까?</td><td>예상 쓰기<br>모둠 토의<br>정리 퀴즈</td></tr>
+          <tr><td></td><td>3단원. 열의 이동</td><td></td></tr>
         </tbody>
       </table>
     </div>
-    <p class="muted">선생님·과목은 날짜 없는 줄에 한 번만 쓰면 매일 나오고, 날짜를 적은 줄에 쓰면 그날만 바뀌어요. 비어 있는 칸은 건너뛰어요. 시트에 아무것도 없는 날에는 활동은 마지막에 쓴 내용, 질문은 기본 목록에서 나와요. 칠판에서 ✏️ 편집이나 🎲로 바꾼 내용은 그날 하루만 보여요.</p>
+    <p class="muted">활동 칸에는 한 줄에 활동 하나씩 쓰면 칠판에서 체크박스가 돼요. 비어 있는 칸은 건너뛰어요. 시트에 아무것도 없는 날에는 칠판에서 마지막으로 쓴 내용이 나와요. 칠판에서 ✏️ 편집으로 바꾼 내용은 그날 하루 동안 시트보다 먼저 보여요.</p>
     <label for="sheetUrl">구글 시트 링크 (또는 시트 ID)</label>
     <input id="sheetUrl" type="url" inputmode="url" autocomplete="off" placeholder="https://docs.google.com/spreadsheets/d/…">
     <div class="row left">
@@ -759,7 +734,7 @@
   const rand = (n) => Math.floor(Math.random() * n);
 
   // 버전: 기능을 바꿀 때마다 APP_VERSION 을 올림. 앱(APK)으로 만들 때는 빌드 번호가 자동으로 붙음
-  const APP_VERSION = '2.3';
+  const APP_VERSION = '2.4';
   const BUILD = '@@BUILD@@';
   const verText = 'Ver ' + APP_VERSION + (/^\d+$/.test(BUILD) ? ` (빌드 ${BUILD})` : '');
   $('appVer').textContent = verText;
@@ -1023,6 +998,8 @@
         <button class="s-minus" data-i="${i}" aria-label="${i + 1}모둠 1점 빼기">−</button>
         <span class="s-plus">+1</span>
       </div>`).join('');
+    const leaders = shown.map((v, i) => (top > 0 && v === top ? i + 1 : 0)).filter(Boolean);
+    $('miniScore').textContent = leaders.length && leaders.length < n ? `1등 ${leaders.join('·')}모둠` : '모둠 점수';
   }
   function addScore(i, d) {
     scores[i] = Math.max(0, scores[i] + d);
@@ -1089,24 +1066,7 @@
     }
   }
 
-  /* ================= 오늘의 활동 / 질문 ================= */
-  const QUESTIONS = [
-    '요즘 나를 가장 웃게 만드는 것은 무엇인가요?',
-    '내가 초능력을 하나 가질 수 있다면 무엇을 고를까요?',
-    '친구에게 고맙다고 말하고 싶은 일이 있나요?',
-    '10년 뒤의 나에게 한마디 한다면?',
-    '오늘 꼭 해내고 싶은 한 가지는?',
-    '내가 가장 좋아하는 계절과 그 이유는?',
-    '최근에 새로 배운 것이 있다면?',
-    '하루 동안 선생님이 된다면 무엇을 하고 싶나요?',
-    '나를 한 단어로 표현한다면?',
-    '무인도에 세 가지만 가져갈 수 있다면?',
-    '우리 반의 자랑거리는 무엇일까요?',
-    '실수했을 때 나는 어떻게 마음을 다잡나요?',
-    '세상에 없는 새로운 과목을 만든다면?',
-    '내가 좋아하는 장소는 어디이고, 왜 좋아하나요?',
-    '오늘 누군가를 도울 수 있는 방법은?',
-  ];
+  /* ================= 오늘의 활동 / 오늘 배울 내용 ================= */
   const DEFAULT_ACTIVITY = '1. 인사 나누기\n2. 오늘의 학습 목표 확인\n3. 모둠 활동\n4. 발표 및 정리';
 
   const readJSON = (k, d) => { try { const v = store.get(k, null); return v === null ? d : JSON.parse(v); } catch (e) { return d; } };
@@ -1118,7 +1078,7 @@
   const qEl = $('qText');
 
   // 구글 시트에서 불러온 내용 (인터넷이 끊겨도 마지막 내용을 그대로 사용)
-  let sheet = readJSON('sheet', null); // { url, csvUrl, fetchedAt, rows: [{ date, name, subject, activity, question }] }
+  let sheet = readJSON('sheet', null); // { url, csvUrl, fetchedAt, rows: [{ date, question(배울 내용), activity }] }
 
   // 시트에서 오늘 보여 줄 줄: 오늘 날짜가 적힌 줄 → 없으면 날짜 없는 줄을 수업 날마다 하나씩 차례로
   function fromSheet(kind, d) {
@@ -1192,10 +1152,11 @@
     $('actNote').textContent = s ? s.note : '';
 
     o = todayOverride('question', d); s = !o && fromSheet('question', d);
-    qEl.textContent = o ? o.text : s ? s.row.question : QUESTIONS[dayNoOf(d) % QUESTIONS.length];
+    const lesson = o ? o.text : s ? s.row.question : store.get('lesson', '');
+    qEl.textContent = lesson || '✏️ 편집을 눌러 오늘 배울 내용(학습목표, 단원명, 질문 등)을 써 주세요';
+    qEl.classList.toggle('placeholder', !lesson);
     $('qNote').textContent = s ? s.note : '';
 
-    renderTitle(d);
   }
 
   document.querySelectorAll('.edit-btn').forEach((btn) => {
@@ -1207,11 +1168,13 @@
       btn.textContent = '✏️ 편집';
       writeJSON('override:' + kind, { day: dayKeyOf(new Date()), text });
       if (kind === 'activity') store.set('activity', text); // 시트가 없을 때 다음 날에도 이어서 사용
+      if (kind === 'question') store.set('lesson', text);
       renderTexts();
     };
     btn.addEventListener('click', () => {
       if (el.isContentEditable) { finish(); return; }
       if (kind === 'activity') el.textContent = currentActivity; // 한 줄에 한 활동씩
+      if (el.classList.contains('placeholder')) { el.textContent = ''; el.classList.remove('placeholder'); }
       el.contentEditable = 'true';
       btn.textContent = '✅ 완료';
       el.focus();
@@ -1223,21 +1186,6 @@
     el.addEventListener('keydown', (e) => { if (e.key === 'Escape') el.blur(); });
   });
 
-  const pickOther = (list, now) => {
-    const pool = list.filter((x) => x !== now);
-    return pool.length ? pool[rand(pool.length)] : now;
-  };
-  // 🎲는 날짜를 비운 줄(또는 오늘 날짜 줄)에서만 고름 — 다른 날로 정해 둔 내용은 아껴 둠
-  const sheetPool = () => {
-    const key = dayKeyOf(new Date());
-    return sheet && sheet.rows ? sheet.rows.filter((r) => !r.date || r.date === key) : [];
-  };
-  $('qNext').addEventListener('click', () => {
-    const mine = sheetPool().map((r) => r.question).filter((x) => x && x.trim());
-    const text = pickOther(mine.length ? mine : QUESTIONS, qEl.textContent);
-    writeJSON('override:question', { day: dayKeyOf(new Date()), text });
-    renderTexts();
-  });
 
   /* ================= 설정: 화면 스타일 ================= */
   function applyTheme(t) {
@@ -1256,44 +1204,6 @@
   $('prefsPlan').addEventListener('click', () => { prefs.hidden = true; $('planBtn').click(); });
   $('prefsAbout').addEventListener('click', () => { prefs.hidden = true; $('appVer').click(); });
 
-  /* ================= 제목: ○○○ 선생님과 함께하는 즐거운 ○○ 수업 ================= */
-  // 순서: 칠판에서 오늘 고친 것 → 시트(오늘 날짜 줄, 없으면 날짜 없는 첫 줄) → 마지막으로 칠판에서 쓴 것
-  const TITLE_STORE = { name: 'teacherName', subject: 'subject' };
-  function titleValue(kind, d) {
-    const o = todayOverride(kind, d);
-    if (o) return o.text;
-    if (sheet && sheet.rows) {
-      const key = dayKeyOf(d);
-      const row = sheet.rows.find((r) => r.date === key && r[kind]) || sheet.rows.find((r) => !r.date && r[kind]);
-      if (row) return row[kind];
-    }
-    return store.get(TITLE_STORE[kind], '');
-  }
-  function renderTitle(d = new Date()) {
-    document.querySelectorAll('.title-edit').forEach((el) => {
-      if (!el.isContentEditable) el.textContent = titleValue(el.dataset.kind, d) || el.dataset.ph;
-    });
-  }
-  document.querySelectorAll('.title-edit').forEach((el) => {
-    const kind = el.dataset.kind;
-    const finish = () => {
-      if (!el.isContentEditable) return;
-      const text = el.textContent.replace(/\s+/g, ' ').trim();
-      el.contentEditable = 'false';
-      writeJSON('override:' + kind, { day: dayKeyOf(new Date()), text });
-      store.set(TITLE_STORE[kind], text);
-      renderTitle();
-    };
-    el.addEventListener('click', () => {
-      if (el.isContentEditable) return;
-      el.textContent = titleValue(kind, new Date());
-      el.contentEditable = 'true';
-      el.focus();
-      getSelection().selectAllChildren(el);
-    });
-    el.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === 'Escape') { e.preventDefault(); el.blur(); } });
-    el.addEventListener('blur', finish);
-  });
 
   /* ================= 구글 시트 연결 ================= */
   // 공유 링크(…/spreadsheets/d/ID/edit…), 웹에 게시 링크(…/d/e/…/pub…), 시트 ID만 넣어도 CSV 주소로 바꿈
@@ -1342,19 +1252,18 @@
     const head = (table[0] || []).map((h) => h.replace(/\s/g, ''));
     const col = (re) => head.findIndex((h) => re.test(h));
     const c = {
-      date: col(/날짜|일자|date/i), activity: col(/활동/), question: col(/질문/),
-      name: col(/선생님|교사|담임/), subject: col(/과목|교과|수업/),
+      date: col(/날짜|일자|date/i), activity: col(/활동/),
+      question: col(/배울|학습|목표|단원/) >= 0 ? col(/배울|학습|목표|단원/) : col(/질문/), // 예전 "질문" 칸도 읽음
     };
-    if (c.activity < 0 && c.question < 0 && c.name < 0 && c.subject < 0) {
-      throw new Error('시트 첫 줄에 "날짜, 선생님, 과목, 활동, 질문" 제목이 있어야 해요.');
+    if (c.activity < 0 && c.question < 0) {
+      throw new Error('시트 첫 줄에 "날짜, 배울 내용, 활동" 제목이 있어야 해요.');
     }
     const year = new Date().getFullYear();
     const get = (r, i) => (i >= 0 && r[i] ? r[i].trim() : '');
     return table.slice(1).map((r) => ({
       date: parseDate(get(r, c.date), year),
       activity: get(r, c.activity), question: get(r, c.question),
-      name: get(r, c.name), subject: get(r, c.subject),
-    })).filter((r) => r.activity || r.question || r.name || r.subject);
+    })).filter((r) => r.activity || r.question);
   }
   window.ibwSheet = { parseCSV, sheetRows, parseDate, sheetCsvUrl }; // 확인용
 
@@ -1364,10 +1273,8 @@
     if (!msg) {
       if (sheet && sheet.rows) {
         const count = (k) => sheet.rows.filter((r) => r[k]).length;
-        const first = (k) => (sheet.rows.find((r) => r[k]) || {})[k];
-        const who = [first('name') && `선생님 ${first('name')}`, first('subject') && `과목 ${first('subject')}`].filter(Boolean).join(', ');
-        msg = `✅ 연결됨 · ${fmtTime(sheet.fetchedAt)}에 불러옴 · ${who ? who + ' · ' : ''}활동 ${count('activity')}개, 질문 ${count('question')}개`;
-      } else msg = '아직 연결된 시트가 없어요. 연결하기 전에는 기본 질문이 나와요.';
+        msg = `✅ 연결됨 · ${fmtTime(sheet.fetchedAt)}에 불러옴 · 배울 내용 ${count('question')}개, 활동 ${count('activity')}개`;
+      } else msg = '아직 연결된 시트가 없어요. 연결하기 전에는 칠판에서 직접 쓴 내용이 나와요.';
     }
     el.textContent = msg;
     el.classList.toggle('bad', !!bad);
@@ -1414,7 +1321,7 @@
     store.set('sheet', 'null');
     $('sheetUrl').value = '';
     renderTexts();
-    showSheetStatus('연결을 끊었어요. 이제 기본 질문이 나와요.');
+    showSheetStatus('연결을 끊었어요. 이제 칠판에서 직접 쓴 내용이 나와요.');
   });
   // 뒤로가기·Esc: 열려 있는 창(미리 쓰기, 정보)을 먼저 닫음
   window.ibwCloseOverlay = () => {
