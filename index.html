@@ -71,14 +71,14 @@
   header .row { gap: 8px; }
 
   /* ---------- 위젯 격자 ---------- */
-  /* 배치: 배울 내용·타이머 | 오늘의 활동 / 아래 아이콘 줄 */
+  /* 배치: 오늘의 활동 | 배울 내용·타이머 / 아래 아이콘 줄 */
   main {
     height: calc(100% - 64px);
     padding: 0 var(--gap) var(--gap);
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
     grid-template-rows: minmax(0, 1fr) minmax(0, 1.3fr) minmax(0, .32fr);
-    grid-template-areas: "question activity" "timer activity" "bottom bottom";
+    grid-template-areas: "activity question" "activity timer" "bottom bottom";
     gap: var(--gap);
   }
   #question { grid-area: question; }
@@ -184,6 +184,7 @@
   /* ---------- 타이머 ---------- */
   #timer { --accent: var(--orange); }
   .t-display {
+    line-height: .95;
     font-size: calc(26 * var(--u));
     font-weight: 900;
     font-variant-numeric: tabular-nums;
@@ -256,7 +257,6 @@
     overflow: hidden;
   }
   .score-tile:active { background: rgba(255, 255, 255, .16); }
-  .score-tile.lead { background: rgba(255, 255, 255, .18); background: color-mix(in srgb, var(--g) 22%, transparent); }
   .s-name { font-size: clamp(11px, calc(4.4 * var(--u)), 40px); font-weight: 800; color: var(--g); white-space: nowrap; }
   .s-val { font-size: calc(var(--sv, 13) * var(--u)); font-weight: 900; line-height: 1; font-variant-numeric: tabular-nums; }
   .s-val.bump { animation: pop .3s ease-out; }
@@ -408,10 +408,12 @@
   .wide:not(.expanded) .corner button { font-size: clamp(14px, calc(6 * var(--u)), 26px); }
   #question:not(.expanded) .text { font-size: clamp(20px, calc(13 * var(--u)), 58px); }
   #timer:not(.expanded) .body { gap: calc(4 * var(--u)); }
-  #timer:not(.expanded) .t-display { font-size: calc(30 * var(--u)); }
+  #timer:not(.expanded) .t-display { font-size: calc(44 * var(--u)); }
   #timer:not(.expanded) .t-adj { display: none; }
   #timer:not(.expanded) .t-bar { width: 90%; }
   #timer:not(.expanded) button { font-size: clamp(16px, calc(6 * var(--u)), 32px); }
+  #timer:not(.expanded) .t-presets button { font-size: clamp(13px, calc(3.8 * var(--u)), 20px); padding: .25em .75em; }
+  #timer:not(.expanded) .body { gap: calc(3 * var(--u)); }
 
   /* ---------- 오늘의 활동 체크리스트 ---------- */
   .act-progress { font-size: .6em; color: var(--chalk-dim); font-weight: 700; margin-left: .3em; }
@@ -474,8 +476,6 @@
   .theme-clean .card > .label { color: var(--chalk); }
   .theme-clean .score-tile { --g: rgba(255, 255, 255, .22) !important; }
   .theme-clean .score-tile .s-name { color: var(--chalk-dim); }
-  .theme-clean .score-tile.lead { background: var(--one-soft); border-color: var(--one); }
-  .theme-clean .score-tile.lead .s-name { color: var(--one); }
   .theme-clean .act-item.now { background: var(--one-soft); border-color: var(--one); }
   .theme-clean .act-item.now .act-box { border-color: var(--one); }
   .theme-clean .act-item.now::after { background: var(--one); }
@@ -559,7 +559,7 @@
   <!-- 아래 줄: 부수기능 아이콘 -->
   <div class="bottom">
     <section class="card tile" id="score" style="view-transition-name: score">
-      <div class="mini"><span class="mini-ico">🏆</span><span class="mini-txt" id="miniScore">모둠 점수</span></div>
+      <div class="mini"><span class="mini-ico">🏆</span><span class="mini-txt" id="miniScore">모둠 점수판</span></div>
       <h2 class="label">🏆 모둠 점수판</h2>
       <div class="corner"><button id="sReset">↺ 초기화</button></div>
       <div class="body">
@@ -674,6 +674,7 @@
     </table>
     <h3>업데이트 기록</h3>
     <ul class="changelog">
+      <li><b>2.5</b> 오늘의 활동을 왼쪽으로, 타이머 숫자 크게·시간 버튼 작게, 점수판의 1등 표시(👑) 없애기</li>
       <li><b>2.4</b> 배치 변경(배울 내용·타이머 | 오늘의 활동), "오늘의 질문"을 "오늘 배울 내용"으로, 모둠 점수판을 아래 아이콘으로, 제목 줄 삭제, 집중벨 기본 2번, 날짜 확대 화면 가운데 정렬</li>
       <li><b>2.3</b> 처음 켜면 깔끔한 화면이 기본</li>
       <li><b>2.2</b> 설정 메뉴와 화면 스타일(알록달록 / 깔끔하게), 아래 줄 부수기능을 아이콘으로 단순화, 명언 빼기</li>
@@ -734,7 +735,7 @@
   const rand = (n) => Math.floor(Math.random() * n);
 
   // 버전: 기능을 바꿀 때마다 APP_VERSION 을 올림. 앱(APK)으로 만들 때는 빌드 번호가 자동으로 붙음
-  const APP_VERSION = '2.4';
+  const APP_VERSION = '2.5';
   const BUILD = '@@BUILD@@';
   const verText = 'Ver ' + APP_VERSION + (/^\d+$/.test(BUILD) ? ` (빌드 ${BUILD})` : '');
   $('appVer').textContent = verText;
@@ -990,16 +991,14 @@
     grid.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
     grid.style.setProperty('--sv', rows > 1 ? 13 : 20);
     const shown = scores.slice(0, n);
-    const top = Math.max.apply(null, shown);
     grid.innerHTML = shown.map((v, i) => `
-      <div class="score-tile${top > 0 && v === top ? ' lead' : ''}" data-i="${i}" style="--g: ${GROUP_COLORS[i]}" role="button" aria-label="${i + 1}모둠 1점 더하기">
-        <div class="s-name">${top > 0 && v === top ? '👑 ' : ''}${i + 1}모둠</div>
+      <div class="score-tile" data-i="${i}" style="--g: ${GROUP_COLORS[i]}" role="button" aria-label="${i + 1}모둠 1점 더하기">
+        <div class="s-name">${i + 1}모둠</div>
         <div class="s-val" id="sVal${i}">${v}</div>
         <button class="s-minus" data-i="${i}" aria-label="${i + 1}모둠 1점 빼기">−</button>
         <span class="s-plus">+1</span>
       </div>`).join('');
-    const leaders = shown.map((v, i) => (top > 0 && v === top ? i + 1 : 0)).filter(Boolean);
-    $('miniScore').textContent = leaders.length && leaders.length < n ? `1등 ${leaders.join('·')}모둠` : '모둠 점수';
+
   }
   function addScore(i, d) {
     scores[i] = Math.max(0, scores[i] + d);
