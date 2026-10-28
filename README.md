@@ -52,6 +52,7 @@ https://violetwizard-lim.github.io/interboard_widget/
 
 - 컴퓨터나 칠판의 크롬·엣지에서 위 주소를 열면 바로 씁니다. 즐겨찾기나 시작 페이지로 지정해 두면 편합니다.
 - 저장소에 새 버전을 올리면 1~2분 뒤 웹 버전에도 자동으로 반영됩니다.
+- 웹 버전에서도 구글 시트를 연결할 수 있습니다(구글 시트의 JSONP 방식으로 읽어 브라우저 보안 규칙에 막히지 않음).
 - 구글 시트 연결, 활동 체크, 점수 등은 **그 컴퓨터의 그 브라우저**에 저장됩니다. 다른 컴퓨터에서는 시트 링크를 한 번 다시 넣어야 합니다.
 - (관리자 설정, 처음 한 번) 저장소 **Settings → Pages → Build and deployment**에서 Source를 **Deploy from a branch**, Branch를 `claude/gracious-bardeen-2vozto` / `/ (root)`로 두고 **Save**.
 

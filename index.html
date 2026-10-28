@@ -674,6 +674,7 @@
     </table>
     <h3>업데이트 기록</h3>
     <ul class="changelog">
+      <li><b>2.6</b> 웹 버전(주소로 열기)에서도 구글 시트 연결, 연결 오류 안내 문구 개선</li>
       <li><b>2.5</b> 오늘의 활동을 왼쪽으로, 타이머 숫자 크게·시간 버튼 작게, 점수판의 1등 표시(👑) 없애기</li>
       <li><b>2.4</b> 배치 변경(배울 내용·타이머 | 오늘의 활동), "오늘의 질문"을 "오늘 배울 내용"으로, 모둠 점수판을 아래 아이콘으로, 제목 줄 삭제, 집중벨 기본 2번, 날짜 확대 화면 가운데 정렬</li>
       <li><b>2.3</b> 처음 켜면 깔끔한 화면이 기본</li>
@@ -735,7 +736,7 @@
   const rand = (n) => Math.floor(Math.random() * n);
 
   // 버전: 기능을 바꿀 때마다 APP_VERSION 을 올림. 앱(APK)으로 만들 때는 빌드 번호가 자동으로 붙음
-  const APP_VERSION = '2.5';
+  const APP_VERSION = '2.6';
   const BUILD = '@@BUILD@@';
   const verText = 'Ver ' + APP_VERSION + (/^\d+$/.test(BUILD) ? ` (빌드 ${BUILD})` : '');
   $('appVer').textContent = verText;
@@ -1278,6 +1279,57 @@
     el.textContent = msg;
     el.classList.toggle('bad', !!bad);
   }
+  // 웹 버전(github.io 등)에서는 브라우저 보안 규칙(CORS) 때문에 시트 CSV를 바로 못 읽는 경우가 있어,
+  // 구글 시트가 제공하는 JSONP(<script>로 받기) 방식을 먼저 쓰고, 안 되면 CSV로 다시 시도함
+  const sheetIdOf = (input) => {
+    const s = String(input || '').trim();
+    if (/\/spreadsheets\/d\/e\//.test(s)) return null; // "웹에 게시" 링크는 CSV로만 읽음
+    const m = s.match(/\/spreadsheets\/d\/([\w-]+)/);
+    if (m) return { id: m[1], gid: (s.match(/[#&?]gid=(\d+)/) || [])[1] };
+    return /^[\w-]{25,}$/.test(s) ? { id: s } : null;
+  };
+  let jsonpSeq = 0;
+  function loadSheetJsonp({ id, gid }) {
+    return new Promise((resolve, reject) => {
+      const cb = '__ibwSheet' + (++jsonpSeq);
+      const el = document.createElement('script');
+      const done = (fn, v) => { clearTimeout(timer); delete window[cb]; el.remove(); fn(v); };
+      const timer = setTimeout(() => done(reject, new Error('timeout')), 8000);
+      window[cb] = (resp) => {
+        if (!resp || resp.status === 'error' || !resp.table) {
+          const reason = resp && resp.errors && resp.errors[0] && resp.errors[0].reason;
+          return done(reject, new Error(reason === 'access_denied' ? 'denied' : 'bad'));
+        }
+        done(resolve, gvizTable(resp.table));
+      };
+      el.onerror = () => done(reject, new Error('script'));
+      el.src = `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:json;responseHandler:${cb}&headers=1`
+        + (gid ? '&gid=' + gid : '') + '&_=' + Date.now();
+      document.head.appendChild(el);
+    });
+  }
+  // gviz 표 → CSV와 같은 [[제목…], [칸…], …] 모양
+  function gvizTable(t) {
+    const cell = (c) => {
+      if (!c) return '';
+      if (typeof c.v === 'string') {
+        const d = c.v.match(/^Date\((\d+),(\d+),(\d+)/); // 날짜 칸: 월이 0부터 시작
+        if (d) return `${d[1]}-${+d[2] + 1}-${d[3]}`;
+      }
+      if (c.f != null) return String(c.f);
+      return c.v == null ? '' : String(c.v);
+    };
+    const rows = (t.rows || []).map((r) => (r.c || []).map(cell));
+    const head = (t.cols || []).map((c) => c.label || '');
+    return head.some((h) => h.trim()) ? [head].concat(rows) : rows; // 제목을 못 알아낸 경우 첫 줄을 제목으로
+  }
+  async function loadSheetCsv(csvUrl) {
+    const res = await fetch(csvUrl, { cache: 'no-store' });
+    const text = await res.text();
+    if (!res.ok || /^\s*</.test(text)) throw new Error('denied');
+    return parseCSV(text);
+  }
+
   let loading = false;
   async function loadSheet(url, fromUser) {
     const csvUrl = sheetCsvUrl(url);
@@ -1286,17 +1338,23 @@
     loading = true;
     if (fromUser) showSheetStatus('불러오는 중…');
     try {
-      const res = await fetch(csvUrl, { cache: 'no-store' });
-      const text = await res.text();
-      if (!res.ok || /^\s*</.test(text)) throw new Error('시트를 열 수 없어요. 공유 설정을 "링크가 있는 모든 사용자"로 바꿨는지 확인해 주세요.');
-      const rows = sheetRows(parseCSV(text));
+      let table = null, lastErr = null;
+      const ref = sheetIdOf(url);
+      if (ref) { try { table = await loadSheetJsonp(ref); } catch (e) { lastErr = e; } }
+      if (!table) { try { table = await loadSheetCsv(csvUrl); } catch (e) { lastErr = e; } }
+      if (!table) throw lastErr || new Error('bad');
+      const rows = sheetRows(table);
       sheet = { url, csvUrl, fetchedAt: Date.now(), rows };
       writeJSON('sheet', sheet);
       renderTexts();
       showSheetStatus();
     } catch (e) {
-      const offline = e instanceof TypeError; // fetch 자체 실패 = 인터넷 연결 문제
-      const msg = offline ? '인터넷에 연결할 수 없어요.' + (sheet && sheet.rows ? ' 마지막으로 불러온 내용을 그대로 보여 줘요.' : '') : e.message;
+      const keep = sheet && sheet.rows ? ' 마지막으로 불러온 내용을 그대로 보여 줘요.' : '';
+      let msg;
+      if (navigator.onLine === false) msg = '인터넷에 연결되어 있지 않아요.' + keep;
+      else if (e && /^(denied|script|timeout|bad)$/.test(e.message) || e instanceof TypeError) {
+        msg = '시트를 읽지 못했어요. 시트의 공유 설정이 "링크가 있는 모든 사용자(뷰어)"인지, 링크가 맞는지 확인해 주세요.' + keep;
+      } else msg = e.message; // 시트 첫 줄 제목이 없을 때 등
       if (fromUser || !sheet) showSheetStatus(msg, true);
     } finally {
       loading = false;
