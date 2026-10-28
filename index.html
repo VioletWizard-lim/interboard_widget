@@ -416,6 +416,8 @@
   #timer:not(.expanded) .body { gap: calc(3 * var(--u)); }
 
   /* ---------- 오늘의 활동 체크리스트 ---------- */
+  /* 글자 크기를 자동으로 맞추므로 스크롤 막대는 그리지 않음 (편집 중에는 스크롤 허용) */
+  .act-list:not([contenteditable="true"]), #qText:not([contenteditable="true"]) { overflow: hidden; }
   .act-progress { font-size: .6em; color: var(--chalk-dim); font-weight: 700; margin-left: .3em; }
   .act-list:not([contenteditable="true"]) {
     width: 100%;
@@ -674,6 +676,7 @@
     </table>
     <h3>업데이트 기록</h3>
     <ul class="changelog">
+      <li><b>2.7.1</b> Windows 브라우저에서 활동 칸에 스크롤 막대가 남던 문제 수정</li>
       <li><b>2.7</b> 오늘의 활동·배울 내용이 길면 스크롤 대신 글자 크기를 자동으로 줄여 칸에 맞춤</li>
       <li><b>2.6</b> 웹 버전(주소로 열기)에서도 구글 시트 연결, 연결 오류 안내 문구 개선</li>
       <li><b>2.5</b> 오늘의 활동을 왼쪽으로, 타이머 숫자 크게·시간 버튼 작게, 점수판의 1등 표시(👑) 없애기</li>
@@ -737,7 +740,7 @@
   const rand = (n) => Math.floor(Math.random() * n);
 
   // 버전: 기능을 바꿀 때마다 APP_VERSION 을 올림. 앱(APK)으로 만들 때는 빌드 번호가 자동으로 붙음
-  const APP_VERSION = '2.7';
+  const APP_VERSION = '2.7.1';
   const BUILD = '@@BUILD@@';
   const verText = 'Ver ' + APP_VERSION + (/^\d+$/.test(BUILD) ? ` (빌드 ${BUILD})` : '');
   $('appVer').textContent = verText;
@@ -1107,14 +1110,15 @@
   function fitText(el) {
     if (!el || el.isContentEditable) return;
     el.style.fontSize = '';
-    if (!el.clientHeight || el.scrollHeight <= el.clientHeight + 1) return;
+    const fits = () => el.scrollHeight <= el.clientHeight && el.scrollWidth <= el.clientWidth;
+    if (!el.clientHeight || fits()) return;
     let lo = 12, hi = parseFloat(getComputedStyle(el).fontSize), best = lo;
-    for (let i = 0; i < 9; i++) {
+    for (let i = 0; i < 10; i++) {
       const mid = (lo + hi) / 2;
       el.style.fontSize = mid + 'px';
-      if (el.scrollHeight <= el.clientHeight + 1) { best = mid; lo = mid; } else hi = mid;
+      if (fits()) { best = mid; lo = mid; } else hi = mid;
     }
-    el.style.fontSize = best + 'px';
+    el.style.fontSize = Math.floor(best * 0.97) + 'px'; // 글꼴·소수점 차이로 1px 넘치는 것 방지
   }
   const refit = () => { fitText(actEl); fitText(qEl); };
   if (window.ResizeObserver) {
