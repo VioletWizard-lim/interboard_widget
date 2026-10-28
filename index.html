@@ -674,6 +674,7 @@
     </table>
     <h3>업데이트 기록</h3>
     <ul class="changelog">
+      <li><b>2.7</b> 오늘의 활동·배울 내용이 길면 스크롤 대신 글자 크기를 자동으로 줄여 칸에 맞춤</li>
       <li><b>2.6</b> 웹 버전(주소로 열기)에서도 구글 시트 연결, 연결 오류 안내 문구 개선</li>
       <li><b>2.5</b> 오늘의 활동을 왼쪽으로, 타이머 숫자 크게·시간 버튼 작게, 점수판의 1등 표시(👑) 없애기</li>
       <li><b>2.4</b> 배치 변경(배울 내용·타이머 | 오늘의 활동), "오늘의 질문"을 "오늘 배울 내용"으로, 모둠 점수판을 아래 아이콘으로, 제목 줄 삭제, 집중벨 기본 2번, 날짜 확대 화면 가운데 정렬</li>
@@ -736,7 +737,7 @@
   const rand = (n) => Math.floor(Math.random() * n);
 
   // 버전: 기능을 바꿀 때마다 APP_VERSION 을 올림. 앱(APK)으로 만들 때는 빌드 번호가 자동으로 붙음
-  const APP_VERSION = '2.6';
+  const APP_VERSION = '2.7';
   const BUILD = '@@BUILD@@';
   const verText = 'Ver ' + APP_VERSION + (/^\d+$/.test(BUILD) ? ` (빌드 ${BUILD})` : '');
   $('appVer').textContent = verText;
@@ -1102,6 +1103,25 @@
     return o && o.day === dayKeyOf(d) ? o : null;
   };
 
+  /* 칸에 다 들어가도록 글자 크기 자동 조절 (스크롤 대신). 기본 크기에서 시작해 넘치면 줄임 */
+  function fitText(el) {
+    if (!el || el.isContentEditable) return;
+    el.style.fontSize = '';
+    if (!el.clientHeight || el.scrollHeight <= el.clientHeight + 1) return;
+    let lo = 12, hi = parseFloat(getComputedStyle(el).fontSize), best = lo;
+    for (let i = 0; i < 9; i++) {
+      const mid = (lo + hi) / 2;
+      el.style.fontSize = mid + 'px';
+      if (el.scrollHeight <= el.clientHeight + 1) { best = mid; lo = mid; } else hi = mid;
+    }
+    el.style.fontSize = best + 'px';
+  }
+  const refit = () => { fitText(actEl); fitText(qEl); };
+  if (window.ResizeObserver) {
+    const ro = new ResizeObserver(() => requestAnimationFrame(refit));
+    ro.observe($('activity')); ro.observe($('question'));
+  } else window.addEventListener('resize', refit);
+
   /* 오늘의 활동 = 체크리스트. 한 줄이 한 항목, 체크 안 한 첫 항목이 "지금 하는 중" */
   let currentActivity = '';
   function renderActivity(text) {
@@ -1144,6 +1164,7 @@
       actEl.appendChild(end);
     }
     $('actProgress').textContent = lines.length ? `${st.done.length}/${lines.length} 완료` : '';
+    fitText(actEl);
   }
 
   function renderTexts(d = new Date()) {
@@ -1155,6 +1176,7 @@
     const lesson = o ? o.text : s ? s.row.question : store.get('lesson', '');
     qEl.textContent = lesson || '✏️ 편집을 눌러 오늘 배울 내용(학습목표, 단원명, 질문 등)을 써 주세요';
     qEl.classList.toggle('placeholder', !lesson);
+    fitText(qEl);
     $('qNote').textContent = s ? s.note : '';
 
   }
@@ -1175,6 +1197,7 @@
       if (el.isContentEditable) { finish(); return; }
       if (kind === 'activity') el.textContent = currentActivity; // 한 줄에 한 활동씩
       if (el.classList.contains('placeholder')) { el.textContent = ''; el.classList.remove('placeholder'); }
+      el.style.fontSize = '';
       el.contentEditable = 'true';
       btn.textContent = '✅ 완료';
       el.focus();
