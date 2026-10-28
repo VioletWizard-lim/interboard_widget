@@ -47,6 +47,14 @@
 ## 버전 올리기 (개발용)
 기능을 바꾸면 `index.html`의 `APP_VERSION`을 올리고, 정보 창(`#about`)의 업데이트 기록에 한 줄 추가합니다. APK에는 GitHub Actions 빌드 번호가 자동으로 붙습니다.
 
+## 웹 버전 (설치 없이 주소로 열기)
+https://violetwizard-lim.github.io/interboard_widget/
+
+- 컴퓨터나 칠판의 크롬·엣지에서 위 주소를 열면 바로 씁니다. 즐겨찾기나 시작 페이지로 지정해 두면 편합니다.
+- 저장소에 새 버전을 올리면 1~2분 뒤 웹 버전에도 자동으로 반영됩니다.
+- 구글 시트 연결, 활동 체크, 점수 등은 **그 컴퓨터의 그 브라우저**에 저장됩니다. 다른 컴퓨터에서는 시트 링크를 한 번 다시 넣어야 합니다.
+- (관리자 설정, 처음 한 번) 저장소 **Settings → Pages → Build and deployment**에서 Source를 **Deploy from a branch**, Branch를 `claude/gracious-bardeen-2vozto` / `/ (root)`로 두고 **Save**.
+
 ## 사용법
 1. `index.html`을 크롬/엣지 또는 전자칠판 기본 브라우저로 엽니다.
 2. 수업 시작 때 띄우려면 브라우저 시작 페이지(홈)로 이 파일을 지정해 두면 편합니다.
